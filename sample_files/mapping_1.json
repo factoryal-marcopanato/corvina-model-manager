@@ -1,0 +1,238 @@
+{
+  "name": "Minikube_Mapping",
+  "data": {
+    "unit": "",
+    "description": "",
+    "label": "",
+    "type": "object",
+    "properties": {
+      "S": {
+        "type": "object",
+        "instanceOf": "S:1.0.0",
+        "properties": {
+          "A1": {
+            "type": "object",
+            "instanceOf": "A1:1.0.0",
+            "properties": {
+              "PLine2": {
+                "type": "object",
+                "instanceOf": "PLine2:1.0.0",
+                "properties": {
+                  "WCell4": {
+                    "type": "object",
+                    "instanceOf": "WCell4:1.0.0",
+                    "properties": {
+                      "DriverMachine": {
+                        "type": "object",
+                        "instanceOf": "DriverMachine:1.0.0",
+                        "properties": {
+                          "IntegratedSin": {
+                            "version": "1.0.0",
+                            "type": "double",
+                            "mode": "R",
+                            "historyPolicy": {
+                              "enabled": true
+                            },
+                            "sendPolicy": {
+                              "triggers": [
+                                {
+                                  "changeMask": "value",
+                                  "minIntervalMs": 1000,
+                                  "skipFirstNChanges": 0,
+                                  "type": "onchange"
+                                }
+                              ]
+                            },
+                            "datalink": {
+                              "source": "Minikube.S.A1.PLine2.WCell4.DriverMachine.IntegratedSin"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "A2": {
+            "type": "object",
+            "instanceOf": "A2:1.0.0",
+            "properties": {
+              "PLine2": {
+                "type": "object",
+                "instanceOf": "PLine2:1.0.0",
+                "properties": {
+                  "WCell3": {
+                    "type": "object",
+                    "instanceOf": "WCell3:1.0.0",
+                    "properties": {
+                      "Modbus": {
+                        "type": "object",
+                        "instanceOf": "Modbus:1.0.0",
+                        "properties": {
+                          "IntegratedSin": {
+                            "version": "1.0.0",
+                            "type": "double",
+                            "mode": "R",
+                            "historyPolicy": {
+                              "enabled": true
+                            },
+                            "sendPolicy": {
+                              "triggers": [
+                                {
+                                  "changeMask": "value",
+                                  "minIntervalMs": 1000,
+                                  "skipFirstNChanges": 0,
+                                  "type": "onchange"
+                                }
+                              ]
+                            },
+                            "datalink": {
+                              "source": "Minikube.S.A2.PLine2.WCell3.Modbus.IntegratedSin"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "WCell4": {
+                    "type": "object",
+                    "instanceOf": "WCell4:1.0.0",
+                    "properties": {
+                      "DriverMachine": {
+                        "type": "object",
+                        "instanceOf": "DriverMachine:1.0.0",
+                        "properties": {
+                          "IntegratedSin": {
+                            "version": "1.0.0",
+                            "type": "double",
+                            "mode": "R",
+                            "historyPolicy": {
+                              "enabled": true
+                            },
+                            "sendPolicy": {
+                              "triggers": [
+                                {
+                                  "changeMask": "value",
+                                  "minIntervalMs": 1000,
+                                  "skipFirstNChanges": 0,
+                                  "type": "onchange"
+                                }
+                              ]
+                            },
+                            "datalink": {
+                              "source": "Minikube.S.A2.PLine2.WCell4.DriverMachine.IntegratedSin"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "S2": {
+        "type": "object",
+        "instanceOf": "S2:1.0.0",
+        "properties": {
+          "A1": {
+            "type": "object",
+            "instanceOf": "A1:1.0.0",
+            "properties": {
+              "PLine2": {
+                "type": "object",
+                "instanceOf": "PLine2:1.0.0",
+                "properties": {
+                  "WCell4": {
+                    "type": "object",
+                    "instanceOf": "WCell4:1.0.0",
+                    "properties": {
+                      "DriverMachine": {
+                        "type": "object",
+                        "instanceOf": "DriverMachine:1.0.0",
+                        "properties": {
+                          "IntegratedSin": {
+                            "version": "1.0.0",
+                            "type": "double",
+                            "mode": "R",
+                            "historyPolicy": {
+                              "enabled": true
+                            },
+                            "sendPolicy": {
+                              "triggers": [
+                                {
+                                  "changeMask": "value",
+                                  "minIntervalMs": 1000,
+                                  "skipFirstNChanges": 0,
+                                  "type": "onchange"
+                                }
+                              ]
+                            },
+                            "datalink": {
+                              "source": "Minikube.S2.A1.PLine2.WCell4.DriverMachine.IntegratedSin"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "A2": {
+            "type": "object",
+            "instanceOf": "A2:1.0.0",
+            "properties": {
+              "PLine2": {
+                "type": "object",
+                "instanceOf": "PLine2:1.0.0",
+                "properties": {
+                  "WCell4": {
+                    "type": "object",
+                    "instanceOf": "WCell4:1.0.0",
+                    "properties": {
+                      "DriverMachine": {
+                        "type": "object",
+                        "instanceOf": "DriverMachine:1.0.0",
+                        "properties": {
+                          "IntegratedSin": {
+                            "version": "1.0.0",
+                            "type": "double",
+                            "mode": "R",
+                            "historyPolicy": {
+                              "enabled": true
+                            },
+                            "sendPolicy": {
+                              "triggers": [
+                                {
+                                  "changeMask": "value",
+                                  "minIntervalMs": 1000,
+                                  "skipFirstNChanges": 0,
+                                  "type": "onchange"
+                                }
+                              ]
+                            },
+                            "datalink": {
+                              "source": "Minikube.S2.A2.PLine2.WCell4.DriverMachine.IntegratedSin"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "instanceOf": "Minikube:1.0.0",
+    "tags": []
+  }
+}
