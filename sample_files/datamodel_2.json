@@ -6,23 +6,23 @@
     "properties": {
       "S": {
         "type": "object",
-        "instanceOf": "Test1-S:1.0.0",
+        "instanceOf": "Test1-Minikube.S:1.0.0",
         "properties": {
           "A1": {
             "type": "object",
-            "instanceOf": "Test1-A1:1.0.0",
+            "instanceOf": "Test1-Minikube.S.A1:1.0.0",
             "properties": {
               "PLine2": {
                 "type": "object",
-                "instanceOf": "Test1-PLine2:1.0.0",
+                "instanceOf": "Test1-Minikube.S.A1.PLine2:1.0.0",
                 "properties": {
                   "WCell4": {
                     "type": "object",
-                    "instanceOf": "Test1-WCell4:1.0.0",
+                    "instanceOf": "Test1-Minikube.S.A1.PLine2.WCell4:1.0.0",
                     "properties": {
                       "DriverMachine": {
                         "type": "object",
-                        "instanceOf": "Test1-DriverMachine:1.0.0",
+                        "instanceOf": "Test1-Minikube.S.A1.PLine2.WCell4.DriverMachine:1.0.0",
                         "properties": {
                           "IntegratedSin": {
                             "version": "1.0.0",
@@ -38,19 +38,19 @@
           },
           "A2": {
             "type": "object",
-            "instanceOf": "Test1-A2:1.0.0",
+            "instanceOf": "Test1-Minikube.A2:1.0.0",
             "properties": {
               "PLine2": {
                 "type": "object",
-                "instanceOf": "Test1-PLine2:1.0.0",
+                "instanceOf": "Test1-Minikube.A2.PLine2:1.0.0",
                 "properties": {
                   "WCell3": {
                     "type": "object",
-                    "instanceOf": "Test1-WCell3:1.0.0",
+                    "instanceOf": "Test1-Minikube.A2.PLine2.WCell3:1.0.0",
                     "properties": {
                       "Modbus": {
                         "type": "object",
-                        "instanceOf": "Test1-Modbus:1.0.0",
+                        "instanceOf": "Test1-Minikube.A2.PLine2.WCell3.Modbus:1.0.0",
                         "properties": {
                           "IntegratedSin": {
                             "version": "1.0.0",
@@ -62,11 +62,11 @@
                   },
                   "WCell4": {
                     "type": "object",
-                    "instanceOf": "Test1-WCell4:1.0.0",
+                    "instanceOf": "Test1-Minikube.A2.PLine2.WCell4:1.0.0",
                     "properties": {
                       "DriverMachine": {
                         "type": "object",
-                        "instanceOf": "Test1-DriverMachine:1.0.0",
+                        "instanceOf": "Test1-Minikube.A2.PLine2.WCell4.DriverMachine:1.0.0",
                         "properties": {
                           "IntegratedSin": {
                             "version": "1.0.0",

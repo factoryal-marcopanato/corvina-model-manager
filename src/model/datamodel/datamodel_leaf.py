@@ -2,13 +2,17 @@ import copy
 import dataclasses
 
 from model.corvina_datatype import CorvinaDatatype
-from utils.dataclass_utils import BaseDataClass
+from model.tree.tree_leaf import TreeLeaf
 
 
-@dataclasses.dataclass
-class DataModelLeaf(BaseDataClass):
-    version: str
+@dataclasses.dataclass(kw_only=True)
+class DataModelLeaf(TreeLeaf):
+    version: str | None = None
     type: CorvinaDatatype
+
+    def __post_init__(self):
+        if self.version is None:
+            self.version = '1.0.0'
 
     @classmethod
     def from_dict(cls, dikt: dict) -> 'DataModelLeaf':

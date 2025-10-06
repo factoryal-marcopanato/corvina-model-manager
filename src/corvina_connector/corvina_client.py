@@ -1,11 +1,14 @@
+import collections.abc
 
 import orjson
 import aiohttp
 import logging
 
 from model.datamodel.datamodel_root import DataModelRoot
+from utils.corvina_version_utils import version_re
 from model.device.corvina_device import CorvinaDevice
 from model.mapping.mapping_root import MappingRoot
+from utils.dict_utils import remove_nulls
 
 logger = logging.getLogger('app.corvina')
 
@@ -74,6 +77,27 @@ class CorvinaClient:
             assert req.ok, f'Got {req.status} with body {data} while asking for {path}'
             return orjson.loads(data)
 
+    @staticmethod
+    async def _delete_json(session: aiohttp.ClientSession, path: str, data: str | bytes | None = None, **kwargs) -> dict:
+        async with session.delete(path, data=data, params=kwargs) as req:
+            data = await req.text()
+            assert req.ok, f'Got {req.status} with body {data} while asking for {path}'
+            return orjson.loads(data)
+
+    @staticmethod
+    async def _post_json(session: aiohttp.ClientSession, path: str, data: str | bytes, **kwargs) -> dict:
+        logger.debug(f'Posting {data} to {path}')
+        async with session.post(path, headers={'Content-Type': 'application/json'}, data=data, params=kwargs) as req:
+            data = await req.text()
+            assert req.ok, f'Got {req.status} with body {data} while posting {data} in {path}'
+            return orjson.loads(data)
+
+    @staticmethod
+    def _prepare(obj: dict) -> bytes:
+        data = orjson.loads(orjson.dumps(obj))  # Not so efficient, but...
+        remove_nulls(data)
+        return orjson.dumps(data)
+
     def _session(self) -> aiohttp.ClientSession:
         return aiohttp.ClientSession(
             headers={'Authorization': self._jwt_token or 'please-login'},
@@ -93,6 +117,9 @@ class CorvinaClient:
         fix_items = [CorvinaDevice.from_dict(i) for i in response['data']]
         return {i.id: i for i in fix_items}
 
+    # ------------------------------------------------------------------------------------------------------------------
+    # Models Part
+    # ------------------------------------------------------------------------------------------------------------------
     async def get_datamodels_by_id(self) -> dict[str, DataModelRoot]:
         logger.info('Querying Models')
 
@@ -107,11 +134,83 @@ class CorvinaClient:
         # models = await api.get_models(organization=self._org, page_size=1000)
         # return {m.id: m for m in models.data}
 
-    async def get_mappings_by_id(self) -> dict[str, MappingRoot]:
+    async def get_datamodels_from_names(self, names: collections.abc.Iterable[str]) -> list[DataModelRoot]:
+        datamodels = await self.get_datamodels_by_id()
+        res = []
+        for name in names:
+            match = version_re.match(name)
+            if match is not None: # split model name and version
+                m_name = match[1]
+                m_version = match[2]
+                found_dms = [dm for dm in datamodels.values() if dm.name == m_name and dm.version == m_version]
+            else:  # remove ALL found versions for that name
+                found_dms = [dm for dm in datamodels.values() if dm.name == name]
+
+            if len(found_dms) > 0:  # more than one datamodel can be found (e.g. more than one version available)
+                res.extend(found_dms)
+        return res
+
+    async def create_data_model(self, data_model: DataModelRoot):
+        async with self._session() as s:
+            # Sample Payload
+            # {"name":"prova:1.0.0","data":{"type":"object","instanceOf":"prova:1.0.0","properties":{"a":{"type":"integer"}},"label":"","unit":"","description":"","tags":[]}}
+            data = await self._post_json(s, 'api/v1/models', self._prepare(data_model.get_create_model_payload()), organization=self._org)
+            new_data_model_root = DataModelRoot.from_dict(data)
+            logger.debug(f'Got {orjson.dumps(new_data_model_root)}')
+
+            # TODO should check for equality, or better, set ids etc...
+
+    async def delete_data_model(self, data_model: DataModelRoot):
+        await data_model.maybe_fetch_id(self)
+
+        async with self._session() as s:
+            data = await self._delete_json(s, 'api/v1/models/' + data_model.id, organization=self._org)
+            deleted_data_model_root = DataModelRoot.from_dict(data)
+            logger.debug(f'Got {orjson.dumps(deleted_data_model_root)}')
+            # TODO should check something?
+
+    async def delete_data_model_by_id(self, data_model_id: str):
+        async with self._session() as s:
+            data = await self._delete_json(s, 'api/v1/models/' + data_model_id, organization=self._org)
+            deleted_data_model_root = DataModelRoot.from_dict(data)
+            logger.debug(f'Got {orjson.dumps(deleted_data_model_root)}')
+            # TODO should check something?
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # Mappings Part
+    # ------------------------------------------------------------------------------------------------------------------
+    # async def get_mappings_by_id(self) -> dict[str, MappingRoot]:
+    #     logger.info('Querying Mappings')
+    #
+    #     async with self._session() as s:
+    #         response = await self._get_json(s, 'api/v1/mappings', organization=self._org, pageSize=10000)
+    #         logger.debug(f'Got {orjson.dumps(response)}')
+    #
+    #     fix_items = [MappingRoot.from_dict(i) for i in response['data']]
+    #     return {i.id: i for i in fix_items}
+    #
+    #     # api = MappingsApi(self._api_client)
+    #     # mappings = await api.search_mapping(organization=self._org, page_size=1000)
+    #     # return {m.id: m for m in mappings.data}
+    #
+    # async def create_mapping(self, data_model: DataModelRoot, mapping: MappingRoot):
+    #     async with self._session() as s:
+    #         # Sample Payload
+    #         # {"name":"ProvaMapping","data":{"type":"object","instanceOf":"prova:1.0.0","properties":{"a":{"version":"1.0.0","type":"integer","mode":"R","historyPolicy":{"enabled":true},"sendPolicy":{"triggers":[{"changeMask":"value","minIntervalMs":1000,"skipFirstNChanges":0,"type":"onchange"}]},"datalink":{"source":"Ent.S.A.Prova"}}},"label":"","unit":"","description":"","UUID":"z5kn06t96oqqm3fl","tags":[]}}
+    #         data = await self._post_json(s, 'api/v1/models', orjson.dumps(mapping.get_create_model_payload()), organization=self._org)
+    #         new_data_model_root = DataModelRoot.from_dict(data)
+    #         logger.debug(f'Got {orjson.dumps(new_data_model_root)}')
+    #
+    #         # TODOo should check for equality, or better, set ids etc...
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # Preset Part
+    # ------------------------------------------------------------------------------------------------------------------
+    async def get_presets_by_id(self) -> dict[str, MappingRoot]:
         logger.info('Querying Mappings')
 
         async with self._session() as s:
-            response = await self._get_json(s, 'api/v1/mappings', organization=self._org, pageSize=10000)
+            response = await self._get_json(s, 'api/v1/presets', organization=self._org, pageSize=10000)
             logger.debug(f'Got {orjson.dumps(response)}')
 
         fix_items = [MappingRoot.from_dict(i) for i in response['data']]
@@ -120,6 +219,36 @@ class CorvinaClient:
         # api = MappingsApi(self._api_client)
         # mappings = await api.search_mapping(organization=self._org, page_size=1000)
         # return {m.id: m for m in mappings.data}
+
+    async def create_preset(self, data_model: DataModelRoot, mapping: MappingRoot):
+        async with self._session() as s:
+            # Sample Payload
+            # {"name":"ProvaMapping","data":{"type":"object","instanceOf":"prova:1.0.0","properties":{"a":{"version":"1.0.0","type":"integer","mode":"R","historyPolicy":{"enabled":true},"sendPolicy":{"triggers":[{"changeMask":"value","minIntervalMs":1000,"skipFirstNChanges":0,"type":"onchange"}]},"datalink":{"source":"Ent.S.A.Prova"}}},"label":"","unit":"","description":"","UUID":"z5kn06t96oqqm3fl","tags":[]}}
+            data = await self._post_json(
+                s, 'api/v1/presets', self._prepare(mapping.get_create_mapping_payload(data_model)), organization=self._org
+            )
+            new_mapping = MappingRoot.from_dict(data)
+            logger.debug(f'Got {orjson.dumps(new_mapping)}')
+
+            # TODO should check for equality, or better, set ids etc...
+
+    async def delete_preset(self, mapping: MappingRoot):
+        await mapping.maybe_fetch_id(self)
+
+        async with self._session() as s:
+            data = await self._delete_json(s, 'api/v1/presets/' + mapping.id, organization=self._org)
+            deleted_mapping = MappingRoot.from_dict(data)
+            logger.debug(f'Got {orjson.dumps(deleted_mapping)}')
+
+            # TODO should check for equality, or better, set ids etc...
+
+    async def delete_preset_by_id(self, mapping_id: str):
+        async with self._session() as s:
+            data = await self._delete_json(s, 'api/v1/presets/' + mapping_id, organization=self._org)
+            deleted_mapping = MappingRoot.from_dict(data)
+            logger.debug(f'Got {orjson.dumps(deleted_mapping)}')
+
+            # TODO should check for equality, or better, set ids etc...
 
 
 """
