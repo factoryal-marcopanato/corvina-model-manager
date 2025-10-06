@@ -5,3 +5,10 @@ aiohttp==3.12.15
 PyJWT[crypto]==2.10.1
 cryptography==46.0.2
 orjson==3.11.3
+
+# From OpenApi files
+# python-dateutil==2.9.0
+pydantic==2.11.10
+# python_dateutil >= 2.8.2
+aiohttp-retry==2.9.1
+# typing-extensions >= 4.7.1

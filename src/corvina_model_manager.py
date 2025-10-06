@@ -22,12 +22,15 @@ async def async_main():
     )
 
     await connector.login()
-    l0.info('Token ' + connector._jwt_token)
+    l0.debug('Token ' + connector._jwt_token)
 
-    datamodels = await connector.get_datamodels_by_name()  # TODO store also the corvina id since it is very very important!!!
-    mappings = await connector.get_mappings_by_name()
-    print(orjson.dumps(datamodels))
-    print(orjson.dumps(mappings))
+    datamodels = await connector.get_datamodels_by_id()  # TODO store also the corvina id since it is very very important!!!
+    mappings = await connector.get_mappings_by_id()
+    devices = await connector.get_devices_by_id()
+
+    # print(orjson.dumps(datamodels))
+    # print(orjson.dumps(mappings))
+    # print(orjson.dumps(devices))
 
     # config_file_path = os.environ.get("CONFIG_FILE_PATH", "/app/config/config.yaml")
     # l0.info(f"Loading configuration from {config_file_path}")

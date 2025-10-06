@@ -7,8 +7,10 @@ from model.tree.tree_node import TreeNode
 
 @dataclasses.dataclass
 class RootNode(TreeNode):
+    id: str
     name: str
     data: RootNodeAux
+    deleted: bool
 
     @classmethod
     def from_dict(cls, dikt: dict) -> 'RootNode':

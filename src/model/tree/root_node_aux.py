@@ -10,6 +10,7 @@ class RootNodeAux(IntermediateNode):
     label: str = ''
     unit: str = ''
     description: str = ''
+    UUID: str = ''
     tags: list[str] = dataclasses.field(default_factory=list)
 
     @classmethod

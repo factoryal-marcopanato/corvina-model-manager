@@ -1,0 +1,3770 @@
+{
+  "openapi": "3.0.0",
+  "servers": [
+    {
+      "url": "/svc/mappings/",
+      "description": "Production deployment"
+    },
+    {
+      "url": "/",
+      "description": "Debug deployment"
+    }
+  ],
+  "info": {
+    "title": "Device mapping service",
+    "version": "1.0.0"
+  },
+  "tags": [
+    {
+      "name": "devices",
+      "description": "Device mappings device APIs"
+    },
+    {
+      "name": "models",
+      "description": "Models management APIs.       Models are versioned, hierarchical, object-like structures representing the device twin in the cloud.       Models contain information about properties data types, their logical parent/child relationships and       optional tags, label, description and unit. Model versions are managed by the system whenever a new       model is submitted. Patch and minor versions are incremented when the data model is changed incrementally       without redefining properties data types. Major versions are generated if a new submitted model redefine a       property data type under the same name.      "
+    },
+    {
+      "name": "mappings",
+      "description": "Mappings management APIs.       Mappings augment model representation by adding information about the actual instantiation of models.       In particular mappings define the R/W mode of a property (the cloud can read or can write from/to device),       the historical policies to apply (full history or last value), and information used to configure how devices should       send their data (data source, send trigger conditions, etc.). Each model can have one or more than one mapping.     "
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "X-Api-Key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Api-Key"
+      },
+      "Authorization": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization"
+      }
+    },
+    "schemas": {
+      "AnyValue": {
+        "description": "Can be any value - string, number, boolean, array or object"
+      },
+      "MappingData": {
+        "type": "object",
+        "properties": {
+          "device_endpoint": {
+            "type": "string"
+          },
+          "server_endpoint": {
+            "type": "string"
+          }
+        }
+      },
+      "MappingInfo": {
+        "type": "object",
+        "properties": {
+          "mapping": {
+            "$ref": "#/components/schemas/MappingData"
+          }
+        }
+      },
+      "DeviceConfigurationObject": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MappingInfo"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "properties": {
+                "type": "object",
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DeviceConfigurationBasic"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DeviceConfigurationArray"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DeviceConfigurationObject"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DeviceConfigurationStruct"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DeviceConfigurationArray": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MappingArray"
+          },
+          {
+            "$ref": "#/components/schemas/MappingInfo"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "item": {
+                "$ref": "#/components/schemas/DeviceConfigurationObject"
+              }
+            }
+          }
+        ]
+      },
+      "DeviceConfigurationBasic": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MappingBasic"
+          },
+          {
+            "$ref": "#/components/schemas/MappingInfo"
+          }
+        ]
+      },
+      "DeviceConfigurationStruct": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MappingStruct"
+          },
+          {
+            "$ref": "#/components/schemas/MappingInfo"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "properties": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/DeviceConfigurationBasic"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DeviceConfiguration": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "datamodel"
+            ],
+            "description": "Device id"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ConfigurationData"
+            }
+          }
+        }
+      },
+      "ConfigurationData": {
+        "type": "object",
+        "properties": {
+          "UUID": {
+            "type": "string",
+            "description": "Instace of an object instantiation inside another model"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "object"
+            ]
+          },
+          "instanceOf": {
+            "type": "string",
+            "description": "The referred model"
+          },
+          "policies": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PolicyData"
+            }
+          },
+          "interfaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InterfaceData"
+            }
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/DeviceConfigurationBasic"
+                },
+                {
+                  "$ref": "#/components/schemas/DeviceConfigurationArray"
+                },
+                {
+                  "$ref": "#/components/schemas/DeviceConfigurationObject"
+                },
+                {
+                  "$ref": "#/components/schemas/DeviceConfigurationStruct"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "PolicyData": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "send",
+              "history"
+            ]
+          }
+        }
+      },
+      "InterfaceData": {
+        "type": "object",
+        "properties": {
+          "interface_name": {
+            "type": "string",
+            "description": "Name of interface"
+          },
+          "version_major": {
+            "type": "string"
+          },
+          "version_minor": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "properties",
+              "datastream"
+            ]
+          },
+          "ownership": {
+            "type": "string",
+            "enum": [
+              "device",
+              "server"
+            ]
+          },
+          "aggregation": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "object"
+            ]
+          },
+          "mappings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MappingsData"
+            }
+          }
+        }
+      },
+      "MappingsData": {
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "description": "Cloud endpoint"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "integer",
+              "boolean",
+              "double",
+              "string",
+              "bytestring"
+            ]
+          }
+        }
+      },
+      "GeoPoint": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number"
+          },
+          "lon": {
+            "type": "number"
+          }
+        }
+      },
+      "VersionsPage": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Page"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "example": {
+          "last": true,
+          "number": 0,
+          "totalElements": 3,
+          "totalPages": 1,
+          "data": [
+            "1.3.0",
+            "2.2.4",
+            "3.0.1"
+          ]
+        }
+      },
+      "ModelRepositoryDTO": {
+        "type": "object",
+        "description": "Contains a model definition (the json property) and other model lifecycle data.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Internal model ID",
+            "example": "Mvvk9jA22u"
+          },
+          "realmId": {
+            "type": "string",
+            "example": "SuperOrg"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the model",
+            "example": "InjectionMouldingMachine"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0.0"
+          },
+          "json": {
+            "$ref": "#/components/schemas/ModelObject"
+          },
+          "orgResourceId": {
+            "type": "string",
+            "example": "SuperOrg.Org.SubOrg"
+          },
+          "creationDate": {
+            "type": "number",
+            "description": "Epoch timestamp (ms) of creation of the model"
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Epoch timestamp (ms) of last change"
+          },
+          "parentId": {
+            "type": "string",
+            "description": "Internal ID of the parent model, or null. For a given major version of a model the latest minor version is the parent of all previous minors.\nSo the latest minor version of a given major has parentId null, and all other minor versions have parentId = id of latest minor.\n"
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "This flag is set to true as soon as this model is destroyed (soft delete)"
+          }
+        }
+      },
+      "ModelPathMetadata": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Model path name. Model paths have the following structure: model_name:model_major_version/property/property\n",
+            "example": "CarModel:1/Engine/speed"
+          },
+          "label": {
+            "type": "string",
+            "description": "Label for the property path",
+            "example": "Car engine"
+          },
+          "description": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "example": "m/s"
+          },
+          "version": {
+            "type": "string",
+            "description": "The latest minor/patch when this property was added/changed computed by the system (with respect to this model path major version)",
+            "example": "1.0.1"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "User defined list of labels to search/filter on"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "object",
+              "struct",
+              "integer",
+              "double",
+              "boolean",
+              "string",
+              "integerarray",
+              "doublearray",
+              "booleanarray",
+              "binaryblob"
+            ],
+            "description": "Type of this model path"
+          },
+          "instanceOf": {
+            "type": "string",
+            "description": "For properties of type object is the model:version they instantiate",
+            "example": "CarMode:1.2.0"
+          }
+        }
+      },
+      "ModelRepositoryWithMetadataDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ModelRepositoryDTO"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "metadata": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ModelPathMetadata"
+                },
+                "description": "Metadata configured by the user for this model object .(label, description, tags, ... ). Models can be [searched](#/models/searchModels) on this metadata\nTo search metadata of model properties use [searchPaths](#/models/searchModelPaths)\n"
+              }
+            }
+          }
+        ]
+      },
+      "PagedModelRepositoryDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Page"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ModelRepositoryDTO"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ModelNameDTO": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          },
+          "orgResourceId": {
+            "type": "string"
+          }
+        }
+      },
+      "PagedModelNameDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Page"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ModelNameDTO"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "MappingRepositoryDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "realmId": {
+            "type": "string"
+          },
+          "modelId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "nameRaw": {
+            "type": "string"
+          },
+          "json": {
+            "$ref": "#/components/schemas/MappingObject"
+          },
+          "orgResourceId": {
+            "type": "string"
+          },
+          "deleted": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PagedMappingRepositoryDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Page"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MappingRepositoryDTO"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DeviceDetailRepositoryDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "realmId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "deviceId": {
+            "type": "string"
+          },
+          "presetId": {
+            "type": "string"
+          },
+          "creationDate": {
+            "type": "number"
+          },
+          "connected": {
+            "type": "boolean"
+          },
+          "position": {
+            "$ref": "#/components/schemas/GeoPoint"
+          },
+          "configurationSent": {
+            "type": "boolean"
+          },
+          "orgResourceId": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "User defined list of labels to search/filter on"
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Epoch timestamp (ms) of last change"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "configurationApplied": {
+            "type": "boolean"
+          },
+          "attributes": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "lastConnUpdateAt": {
+            "type": "number"
+          },
+          "lastConfigUpdateAt": {
+            "type": "number"
+          },
+          "modelId": {
+            "type": "string"
+          },
+          "modelVersion": {
+            "type": "string"
+          },
+          "modelName": {
+            "type": "string"
+          },
+          "presetName": {
+            "type": "string"
+          }
+        }
+      },
+      "DeviceRepositoryDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "realmId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "deviceId": {
+            "type": "string"
+          },
+          "presetId": {
+            "type": "string"
+          },
+          "creationDate": {
+            "type": "number"
+          },
+          "connected": {
+            "type": "boolean"
+          },
+          "position": {
+            "$ref": "#/components/schemas/GeoPoint"
+          },
+          "configurationSent": {
+            "type": "boolean"
+          },
+          "orgResourceId": {
+            "type": "string"
+          }
+        }
+      },
+      "PagedDeviceRepositoryDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Page"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DeviceRepositoryDTO"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "PagedDeviceRepositoryDTOWithAgg": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Page"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DeviceRepositoryDTO"
+                }
+              },
+              "aggregations": {
+                "type": "object",
+                "properties": {
+                  "geogrid": {
+                    "type": "object",
+                    "properties": {
+                      "buckets": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "key": {
+                              "type": "string",
+                              "example": "1/1/0"
+                            },
+                            "doc_count": {
+                              "type": "number",
+                              "example": 1
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ModelPathRepositoryDTO": {
+        "properties": {
+          "orgResourceId": {
+            "type": "string",
+            "example": "org.suborg",
+            "description": "The organization that owns this path model"
+          },
+          "model": {
+            "type": "string",
+            "description": "The model name"
+          },
+          "path": {
+            "type": "string",
+            "description": "Model path name. Model paths have the following structure: model_name:model_major_version/property/property\n",
+            "example": "CarModel:1/Engine/speed"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "object",
+              "struct",
+              "integer",
+              "double",
+              "boolean",
+              "string",
+              "integerarray",
+              "doublearray",
+              "booleanarray",
+              "binaryblob"
+            ],
+            "description": "Type of this model path"
+          },
+          "instanceOf": {
+            "description": "For properties of type object is the model:version they instantiate",
+            "example": "CarMode:1.2.0"
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit of measure",
+            "example": "m/s"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "User defined list of labels to search/filter on"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$",
+            "description": "The latest version of the parent model where this property was introduced/modified"
+          },
+          "deprecated": {
+            "type": "boolean",
+            "description": "This property has been soft-removed (or deprecated) by the object"
+          },
+          "subOrgsEnabledToView": {
+            "type": "boolean",
+            "description": "This property is shared with suborg that can use and view it"
+          }
+        }
+      },
+      "PagedModelPathRepositoryDTO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Page"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ModelPathRepositoryDTO"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DeviceInDTO": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "description": "Device id"
+          },
+          "label": {
+            "type": "string",
+            "description": "Device display name"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "orgResourceId": {
+            "type": "string"
+          }
+        }
+      },
+      "DeviceSearch": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "example": "label.keyword == \"device1\" and configurationApplied == false",
+            "type": "string"
+          },
+          "filters": {
+            "type": "object",
+            "properties": {
+              "organizations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "deviceId": {
+                "type": "string"
+              },
+              "deviceIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "searchField": {
+                "type": "string"
+              },
+              "searchValue": {
+                "type": "string"
+              },
+              "searchFields": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "searchValues": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "matchAny": {
+                "type": "boolean"
+              },
+              "existingFields": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "scopedOrganization": {
+            "type": "string"
+          },
+          "orderBy": {
+            "type": "string",
+            "enum": [
+              "name",
+              "creationDate",
+              "updatedAt"
+            ]
+          },
+          "geoLocation": {
+            "example": [10.99, 45.43],
+            "description": "Array of [lon, lat]",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "geoLocationDistance": {
+            "example": "100km",
+            "description": "The radius of the circle centred on the specified location (geoLocation). Points which fall into this circle are considered to be matches. The distance can be specified in various units. Example 100km",
+            "type": "string"
+          },
+          "geoHashGridPrecision": {
+            "example": 1,
+            "description": "A multi-bucket aggregation that works on geo_point fields and groups points into buckets that represent cells in a grid. The resulting grid can be sparse and only contains cells that have matching data. Each cell is labeled using a geohash which is of user-definable precision. Precision can be between 1 and 12",
+            "type": "number"
+          },
+          "geoTileGridPrecision": {
+            "example": 1,
+            "description": "A multi-bucket aggregation that groups geo_point and geo_shape values into buckets that represent a grid. The resulting grid can be sparse and only contains cells that have matching data. Each cell corresponds to a map tile as used by many online map sites. Each cell is labeled using a \"{zoom}/{x}/{y}\" format, where zoom is equal to the user-specified precision. Precision can be between 0 and 29",
+            "type": "number"
+          },
+          "geoBoundsTopLeft": {
+            "example": [6.32, 46.87],
+            "description": "Array of [lon, lat]",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "geoBoundsBottomRight": {
+            "example": [17.2, 44.03],
+            "description": "Array of [lon, lat]",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "statFields": {
+            "example": [
+              "connected"
+            ],
+            "description": "Array of fields to return in aggregation as stats",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "orderDir": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ]
+          },
+          "scroll": {
+            "type": "boolean"
+          },
+          "scrollId": {
+            "type": "string"
+          },
+          "countDistinct": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "DeviceSearchDTO": {
+        "type": "object",
+        "required": [
+          "deviceIds",
+          "groupPrefix"
+        ],
+        "properties": {
+          "deviceIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "DeviceGroupConfigJob": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Job id"
+          },
+          "instanceOf": {
+            "type": "string",
+            "description": "The preset instance of"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PROCESSING",
+              "DONE",
+              "ERROR"
+            ],
+            "description": "Job Status"
+          },
+          "error": {
+            "type": "string",
+            "description": "Job Error"
+          }
+        }
+      },
+      "DeviceConfigurationInDTO": {
+        "type": "object",
+        "properties": {
+          "device_id": {
+            "type": "string",
+            "description": "Device id"
+          },
+          "timestamp": {
+            "type": "string"
+          },
+          "event": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DeviceConfigurationEvent"
+            }
+          }
+        }
+      },
+      "DeviceConfigurationEvent": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "interface": {
+            "type": "string"
+          }
+        }
+      },
+      "DeviceInfoInDTO": {
+        "type": "object",
+        "properties": {
+          "device_id": {
+            "type": "string",
+            "description": "Device ID"
+          },
+          "lat": {
+            "type": "number",
+            "description": "Latitude"
+          },
+          "lon": {
+            "type": "number",
+            "description": "Longitude"
+          }
+        }
+      },
+      "DeviceMappingsDTO": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "READ",
+              "WRITE",
+              "READ_HISTORY",
+              "WRITE_HISTORY"
+            ]
+          },
+          "modelPath": {
+            "type": "string"
+          },
+          "endpoint": {
+            "type": "string"
+          }
+        }
+      },
+      "ModelInterfaceCreatable": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/ModelObject"
+          },
+          {
+            "$ref": "#/components/schemas/ModelStruct"
+          }
+        ]
+      },
+      "ModelNode": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/ModelBasic"
+          },
+          {
+            "$ref": "#/components/schemas/ModelObject"
+          },
+          {
+            "$ref": "#/components/schemas/ModelStruct"
+          }
+        ]
+      },
+      "ModelObject": {
+        "description": "An object is an arbitrary set of independent properties. Objects can be nested in each other.\nNesting is actually a composition, that is a host object reference a specific version on another\nobject through one of its properties. \nProperties in a deeply nested object hierarchy are commonly accessed using json path syntax (E.g. object.suboject.property),\nwhat we call ModelPath.\nFor convenience a UUID field is provided by the system to identify a specific embedded objects. Thanks to this UUID\nit is possible to identify a model in a deeply nested structure  without having to write the whole ModelPath. This\ncompression is used when storing data or when transmitting data over MQTT topics.\n",
+        "type": "object",
+        "properties": {
+          "UUID": {
+            "type": "string",
+            "description": "This UUID is computed by the system and represents the instantiation of this model in another data model"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "object"
+            ]
+          },
+          "instanceOf": {
+            "type": "string",
+            "description": "The actual name:version of this model, as it is instantiated in current hierarchy"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ModelNode"
+            },
+            "description": "List of properties belonging to this object. Property names are validated against the regular expression ^[a-zA-Z_][a-zA-Z0-9_]*([\\/][a-zA-Z_][a-zA-Z0-9_]*){0,61}$\n"
+          },
+          "label": {
+            "type": "string",
+            "description": "Arbitrary formatted label"
+          },
+          "description": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit of measure"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "User defined tags to filter/search on"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$",
+            "description": "The latest version of the parent model where this property was introduced/modified"
+          },
+          "deprecated": {
+            "type": "boolean",
+            "description": "This property has been soft-removed (or deprecated) by the object"
+          }
+        },
+        "example": {
+          "type": "object",
+          "instanceOf": "CarModel:1.0.0",
+          "properties": {
+            "name": {
+              "type": "string",
+              "version": "1.0.0"
+            },
+            "motor": {
+              "type": "object",
+              "instanceOf": "MotorModel:1.1.0",
+              "version": "1.0.0",
+              "properties": {
+                "speed": {
+                  "type": "integer",
+                  "version": "1.0.0"
+                },
+                "rpm": {
+                  "type": "integer",
+                  "version": "1.1.0"
+                }
+              }
+            },
+            "frontLeftWheel": {
+              "type": "struct",
+              "instanceOf": "Wheel:1.0.0",
+              "properties": {
+                "speed": {
+                  "type": "integer",
+                  "version": "1.0.0"
+                },
+                "rpm": {
+                  "type": "integer",
+                  "version": "1.0.0"
+                }
+              }
+            },
+            "frontRightWheel": {
+              "type": "struct",
+              "instanceOf": "Wheel:1.0.0",
+              "properties": {
+                "speed": {
+                  "type": "integer",
+                  "version": "1.0.0"
+                },
+                "rpm": {
+                  "type": "integer",
+                  "version": "1.0.0"
+                }
+              }
+            },
+            "rearLeftWheel": {
+              "type": "struct",
+              "instanceOf": "Wheel:1.0.0",
+              "properties": {
+                "speed": {
+                  "type": "integer",
+                  "version": "1.0.0"
+                },
+                "rpm": {
+                  "type": "integer",
+                  "version": "1.0.0"
+                }
+              }
+            },
+            "rearRightWheel": {
+              "type": "struct",
+              "instanceOf": "Wheel:1.0.0",
+              "properties": {
+                "speed": {
+                  "type": "integer",
+                  "version": "1.0.0"
+                },
+                "rpm": {
+                  "type": "integer",
+                  "version": "1.0.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ModelArray": {
+        "properties": {
+          "UUID": {
+            "type": "string",
+            "description": "This UUID is computed by the system and represents the instantiation of this model in another data model"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "array"
+            ]
+          },
+          "length": {
+            "type": "number"
+          },
+          "item": {
+            "$ref": "#/components/schemas/ModelObject"
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "User defined tags to filter/search on"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$",
+            "description": "The latest version of the parent model where this property was introduced/modified"
+          },
+          "deprecated": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ModelBasic": {
+        "description": "Simple atomic properties",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "array",
+              "integer",
+              "double",
+              "string",
+              "boolean",
+              "integerarray",
+              "doublearray",
+              "booleanarray",
+              "binaryblob"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "description": "Arbitrary formatted label"
+          },
+          "description": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit of measure"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "User defined tags to filter/search on"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$",
+            "description": "The latest version of the parent model where this property was introduced/modified"
+          },
+          "deprecated": {
+            "type": "boolean",
+            "description": "This property has been soft-removed (or deprecated) by the object"
+          }
+        }
+      },
+      "ModelStruct": {
+        "description": "A struct is an atomic set of basic properties. Structs cannot contain other objects or structs.\n",
+        "properties": {
+          "UUID": {
+            "type": "string",
+            "description": "This UUID is computed by the system and represents the instantiation of this model in another data model"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "struct"
+            ]
+          },
+          "instanceOf": {
+            "type": "string",
+            "description": "Actual struct:version as it is instantiated in current hierarchy"
+          },
+          "properties": {
+            "type": "object",
+            "description": "Property names are validated against the regular expression ^[a-zA-Z_][a-zA-Z0-9_]*([\\/][a-zA-Z_][a-zA-Z0-9_]*){0,61}$\n",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ModelBasic"
+            }
+          },
+          "label": {
+            "type": "string",
+            "description": "Arbitrary formatted label"
+          },
+          "description": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit of measure"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "User defined tags to filter/search on"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$",
+            "description": "The latest version of the parent model where this property was introduced/modified"
+          },
+          "deprecated": {
+            "type": "boolean",
+            "description": "This property has been soft-removed (or deprecated) by the object"
+          }
+        }
+      },
+      "ModelInDTO": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "the model name",
+            "example": "CarModel"
+          },
+          "data": {
+            "type": "object",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ModelObject"
+              },
+              {
+                "$ref": "#/components/schemas/ModelStruct"
+              }
+            ]
+          }
+        }
+      },
+      "ModelSubOrgsEnabledToViewDTO": {
+        "properties": {
+          "data": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ModelValidationInDTO": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ModelInterfaceCreatable"
+          },
+          "modelId": {
+            "type": "string"
+          }
+        }
+      },
+      "ModelValidationOutDTO": {
+        "properties": {
+          "modelId": {
+            "type": "string"
+          },
+          "major": {
+            "type": "boolean"
+          },
+          "minor": {
+            "type": "boolean"
+          },
+          "patch": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ModelSearch": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string",
+            "description": "A string representing the logic condition to match against available fields.\nFor example: path.keyword == \"\" and version \u003E \"1.0.0\" and tags.keyword == \"a\" and tags.keyword = \"b\"\nAvailable operators are not, and, or, in, \u003E, \u003E=, \u003C, \u003C=, ==, !=, ~= (regex match) , !~= (regex match)\nAvailable fields are: \n  name/name.keyword (text/keyword),\n  version (keyword),\n  deleted (boolean),\n  subOrgsEnabledToView (boolean),\n  orgResourceId/orgResouceId (text/keyword),\n  creationDate (date in epoch ms),\n  updatedAt (date in epoch ms),\n  metadata.label/metadata.label.keyword (text/keyword),\n  metadata.description/metadata.description.keyword (text/keyword),\n  metadata.tags/metadata.tags.keyword (text/keyword),\n  metadata.unit/metadata.unit.keyword (text/keyword)\n"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "scopedOrganization": {
+            "type": "string"
+          },
+          "orderBy": {
+            "type": "string",
+            "enum": [
+              "name",
+              "creationDate",
+              "updatedAt"
+            ]
+          },
+          "orderDir": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ]
+          }
+        }
+      },
+      "ModelPathSearch": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string",
+            "description": "A string representing the logic condition to match against available fields.\nFor example: path.keyword == \"\" and version \u003E \"1.0.0\" and tags.keyword == \"a\" and tags.keyword = \"b\"\nAvailable operators are not, and, or, in, \u003E, \u003E=, \u003C, \u003C=, ==, !=, ~= (regex match) , !~= (regex match)\nAvailable fields are: \n  deprecated (boolean), \n  instanceOf/instanceOf.keyword (text/keyword),\n  model (keyword),\n  version (version),\n  type (keyword),\n  orgResourceId/orgResourceId.keyword (text/keyword),\n  path/path.keyword (text/keyword),\n  label/label.keyword (text/keyword),\n  tags/tags.keyword (text/keyword),\n  unit (keyword),\n  subOrgsEnabledToView (boolean)\n"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "orderBy": {
+            "type": "string",
+            "items": {
+              "type": "string",
+              "enum": [
+                "path",
+                "version",
+                "label",
+                "model",
+                "orgResourceId"
+              ]
+            }
+          },
+          "orderDir": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ]
+          },
+          "orderByArray": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Allows to sort with different criterias in the given order. For example: [ [ \"path\" , \"asc\" ], [\"version\", \"desc\"] ] "
+          }
+        }
+      },
+      "Page": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "number"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "totalPages": {
+            "type": "number"
+          },
+          "number": {
+            "type": "number"
+          },
+          "scrollId": {
+            "type": "number"
+          }
+        }
+      },
+      "MappingNode": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/MappingBasic"
+          },
+          {
+            "$ref": "#/components/schemas/MappingObject"
+          },
+          {
+            "$ref": "#/components/schemas/MappingStruct"
+          }
+        ]
+      },
+      "MappingHistoryPolicy": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "If cloud should store all the historical samples or just the last one"
+          }
+        }
+      },
+      "MappingAdditionalInfo": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "R",
+              "RW"
+            ],
+            "description": "Read-only or read-write from the cloud"
+          },
+          "historyPolicy": {
+            "$ref": "#/components/schemas/MappingHistoryPolicy"
+          },
+          "sendPolicy": {
+            "$ref": "#/components/schemas/MappingSendPolicy"
+          },
+          "datalink": {
+            "$ref": "#/components/schemas/MappingDatalink"
+          }
+        },
+        "required": [
+          "mode",
+          "historyPolicy",
+          "sendPolicy "
+        ]
+      },
+      "OnLevelTrigger": {
+        "type": "object",
+        "properties": {
+          "minIntervalMs": {
+            "type": "number",
+            "description": "The minimum number of milliseconds between two triggers"
+          },
+          "tagName": {
+            "type": "string",
+            "description": "The original tag name to use as change source for this trigger (if omitted use the datalink tag configured for the mapped property)"
+          },
+          "skipFirstNChanges": {
+            "type": "number",
+            "description": "First N changes after startup to ignore"
+          },
+          "level": {
+            "type": "number",
+            "description": "The numeric value used for triggering"
+          },
+          "levelString": {
+            "type": "string",
+            "description": "The string value used for triggering",
+            "enum": [
+              "onenter",
+              "onexit",
+              "onenter|onexit"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "description": "Decide when to trigger (if onentering or exiting the level or both)"
+          },
+          "deadband": {
+            "type": "number",
+            "description": "The absolute deadband to consider for triggers (applies only to numeric levels)"
+          },
+          "deadbandPercent": {
+            "type": "number",
+            "description": "The % deadband to consider for triggers (applies only to numeric levels)"
+          },
+          "changeMask": {
+            "type": "string",
+            "enum": [
+              "value",
+              "timestamp",
+              "value|timestamp"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "onlevel"
+            ]
+          }
+        }
+      },
+      "OnChangeTrigger": {
+        "type": "object",
+        "properties": {
+          "minIntervalMs": {
+            "type": "number",
+            "description": "The minimum number of milliseconds between two triggers"
+          },
+          "tagName": {
+            "type": "string",
+            "description": "The original tag name to use as change source for this trigger (if omitted use the datalink tag configured for the mapped property)"
+          },
+          "skipFirstNChanges": {
+            "type": "number",
+            "description": "First N changes after startup to ignore"
+          },
+          "deadband": {
+            "type": "number",
+            "description": "The absolute deadband to consider for triggers"
+          },
+          "deadbandPercent": {
+            "type": "number",
+            "description": "The % deadband to consider for triggers"
+          },
+          "changeMask": {
+            "type": "string",
+            "enum": [
+              "value",
+              "timestamp",
+              "value|timestamp"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "onchange"
+            ]
+          }
+        }
+      },
+      "OnFieldChangeTrigger": {
+        "type": "object",
+        "properties": {
+          "minIntervalMs": {
+            "type": "number",
+            "description": "The minimum number of milliseconds between two triggers"
+          },
+          "fieldName": {
+            "type": "string",
+            "description": "Field name of the corvina structure to which this trigger applies, that will be use as change source for this trigger"
+          },
+          "skipFirstNChanges": {
+            "type": "number",
+            "description": "First N changes after startup to ignore"
+          },
+          "deadband": {
+            "type": "number",
+            "description": "The absolute deadband to consider for triggers"
+          },
+          "deadbandPercent": {
+            "type": "number",
+            "description": "The % deadband to consider for triggers"
+          },
+          "changeMask": {
+            "type": "string",
+            "enum": [
+              "value",
+              "timestamp",
+              "value|timestamp"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "fieldchange"
+            ]
+          }
+        }
+      },
+      "OnFieldLevelTrigger": {
+        "type": "object",
+        "properties": {
+          "minIntervalMs": {
+            "type": "number",
+            "description": "The minimum number of milliseconds between two triggers"
+          },
+          "fieldName": {
+            "type": "string",
+            "description": "Field name of the corvina structure to which this trigger applies, that will be use as change source for this trigger"
+          },
+          "skipFirstNChanges": {
+            "type": "number",
+            "description": "First N changes after startup to ignore"
+          },
+          "level": {
+            "type": "number",
+            "description": "The numeric value used for triggering"
+          },
+          "levelString": {
+            "type": "string",
+            "description": "The string value used for triggering",
+            "enum": [
+              "onenter",
+              "onexit",
+              "onenter|onexit"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "description": "Decide when to trigger (if onentering or exiting the level or both)"
+          },
+          "deadband": {
+            "type": "number",
+            "description": "The absolute deadband to consider for triggers (applies only to numeric levels)"
+          },
+          "deadbandPercent": {
+            "type": "number",
+            "description": "The % deadband to consider for triggers (applies only to numeric levels)"
+          },
+          "changeMask": {
+            "type": "string",
+            "enum": [
+              "value",
+              "timestamp",
+              "value|timestamp"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "fieldlevel"
+            ]
+          }
+        }
+      },
+      "OnIntervalTrigger": {
+        "type": "object",
+        "properties": {
+          "intervalMs": {
+            "type": "number",
+            "description": "Trigger every intervalMs milliseconds"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "timer"
+            ]
+          }
+        }
+      },
+      "MappingSendPolicy": {
+        "type": "object",
+        "description": "The policy the device should use to publish the data. This information is only used by the device (not by the cloud).",
+        "properties": {
+          "triggers": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/OnChangeTrigger"
+                },
+                {
+                  "$ref": "#/components/schemas/OnIntervalTrigger"
+                },
+                {
+                  "$ref": "#/components/schemas/OnLevelTrigger"
+                },
+                {
+                  "$ref": "#/components/schemas/OnFieldChangeTrigger"
+                },
+                {
+                  "$ref": "#/components/schemas/OnFieldLevelTrigger"
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "triggers"
+        ]
+      },
+      "MappingDatalink": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "The name the device uses to identify the data source. This information is only used by the device (not by the cloud)."
+          },
+          "type": {
+            "type": "string",
+            "description": "The type of source, it can be a simple text (default) otherwise a formula."
+          }
+        }
+      },
+      "MappingObject": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/MappingAdditionalInfo"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "UUID": {
+                "type": "string",
+                "description": "See the corresponding model property"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "object"
+                ]
+              },
+              "instanceOf": {
+                "type": "string",
+                "description": "See the corresponding model property"
+              },
+              "properties": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/MappingNode"
+                }
+              },
+              "label": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "version": {
+                "type": "string",
+                "description": "See the corresponding model property"
+              },
+              "deprecated": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "MappingArray": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ModelArray"
+          },
+          {
+            "$ref": "#/components/schemas/MappingAdditionalInfo"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "item": {
+                "$ref": "#/components/schemas/MappingObject"
+              }
+            }
+          }
+        ]
+      },
+      "MappingBasic": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ModelBasic"
+          },
+          {
+            "$ref": "#/components/schemas/MappingAdditionalInfo"
+          }
+        ]
+      },
+      "MappingStruct": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ModelStruct"
+          },
+          {
+            "$ref": "#/components/schemas/MappingAdditionalInfo"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "properties": {
+                "$ref": "#/components/schemas/MappingBasic"
+              }
+            }
+          }
+        ]
+      },
+      "MappingInDTO": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MappingObject"
+              },
+              {
+                "$ref": "#/components/schemas/MappingStruct"
+              }
+            ]
+          }
+        }
+      },
+      "MappingJob": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Job id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PROCESSING",
+              "DONE",
+              "ERROR"
+            ],
+            "description": "Job Status"
+          },
+          "error": {
+            "type": "string",
+            "description": "Job Error"
+          }
+        }
+      },
+      "MappingsSubOrgsEnabledToViewDTO": {
+        "properties": {
+          "data": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Device": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "description": "Device id"
+          },
+          "id": {
+            "type": "string",
+            "description": "Internal id"
+          },
+          "label": {
+            "type": "string",
+            "description": "Device display name"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "realmId": {
+            "type": "string"
+          },
+          "orgResourceId": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "creationDate": {
+            "type": "number"
+          },
+          "presetId": {
+            "type": "string"
+          },
+          "configurationJson": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "connected": {
+            "type": "boolean"
+          },
+          "position": {
+            "$ref": "#/components/schemas/GeoPoint"
+          },
+          "configurationSent": {
+            "type": "boolean"
+          },
+          "attributes": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Success"
+      },
+      "400": {
+        "description": "Bad request"
+      },
+      "403": {
+        "description": "Forbidden"
+      }
+    },
+    "parameters": {
+      "version": {
+        "in": "query",
+        "name": "version",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Version to retrieve",
+        "example": "1.0.0"
+      },
+      "orderDir": {
+        "in": "query",
+        "name": "orderDir",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "asc",
+            "desc"
+          ]
+        },
+        "description": "Order direction"
+      },
+      "search": {
+        "in": "query",
+        "name": "search",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Query string"
+      },
+      "page": {
+        "in": "query",
+        "name": "page",
+        "schema": {
+          "type": "integer",
+          "default": 0
+        },
+        "description": "Page to retrieve"
+      },
+      "pageSize": {
+        "in": "query",
+        "name": "pageSize",
+        "schema": {
+          "type": "integer",
+          "default": 10
+        },
+        "description": "Maximum number of entries per page"
+      },
+      "organization": {
+        "in": "query",
+        "name": "organization",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Organization resource name. For read APIs the special value \"*\" can be used to retrieve data across all suborganizations or current token organization.",
+        "example": "parentorg.suborg.subsuborg"
+      },
+      "username": {
+        "in": "query",
+        "name": "username",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Allow to specify a different username than the preferred_username in the token"
+      },
+      "omitContent": {
+        "in": "query",
+        "name": "omitContent",
+        "schema": {
+          "type": "boolean"
+        },
+        "description": "Omit the JSON content in the response"
+      }
+    }
+  },
+  "security": [
+    {
+      "Authorization": []
+    },
+    {
+      "X-Api-Key": []
+    }
+  ],
+  "paths": {
+    "/api/v1/devices/": {
+      "get": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Retrieve devices",
+        "operationId": "getDevices",
+        "description": "Retrieve devices. The maximum number of returned values (page*size) is hard capped to 10000",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "$ref": "#/components/parameters/search"
+          },
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/orderDir"
+          },
+          {
+            "in": "query",
+            "name": "deviceId",
+            "schema": {
+              "type": "string"
+            },
+            "description": "deviceId"
+          },
+          {
+            "in": "query",
+            "name": "searchField",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search field to query"
+          },
+          {
+            "in": "query",
+            "name": "searchValue",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Value for searchField to look for"
+          },
+          {
+            "in": "query",
+            "name": "searchFields[]",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON array of search fields to query. If the same search field is specified multiple times it will be ORed"
+          },
+          {
+            "in": "query",
+            "name": "searchValues[]",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON array of search values for searchFields to look for"
+          },
+          {
+            "in": "query",
+            "name": "existingFields[]",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON array of fields that must exist in devices"
+          },
+          {
+            "in": "query",
+            "name": "orderBy",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "creationDate",
+                "updatedAt"
+              ]
+            },
+            "description": "Sorting filter"
+          },
+          {
+            "in": "query",
+            "name": "scroll",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Querying with scroll option"
+          },
+          {
+            "in": "query",
+            "name": "scrollId",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Querying scrolling to next result"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedDeviceRepositoryDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/attributes": {
+      "get": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Retrieve attributes",
+        "operationId": "getAttributes",
+        "description": "Retrieve attributes' keys saved in different devices",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/devices/attributes/{key}": {
+      "get": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Retrieve values for a specific attribute key",
+        "operationId": "getAttributeValues",
+        "description": "Retrieve values for a specific attribute key saved in different devices",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Attribute key"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/devices/search": {
+      "post": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Search Devices",
+        "operationId": "searchDevice",
+        "description": "Data, geoLocation, geoLocationDistance are used to filter devices. GeoHashGridPrecision permits to create a geo hash grid with the filtered devices.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceSearch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedDeviceRepositoryDTOWithAgg"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{id}": {
+      "get": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Retrieves device metadata",
+        "operationId": "getDeviceMetadata",
+        "description": "Retrieves device metadata",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "deviceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceDetailRepositoryDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Update a device configuration",
+        "operationId": "updateDeviceConfiguration",
+        "description": "Update a device configuration",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Device Id"
+          },
+          {
+            "in": "query",
+            "name": "presetId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "presetId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceConfiguration"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Update device attribute with a given id (Deprecated - use PUT /api/v1/devices/{id}/attributes using hw id).",
+        "operationId": "updateDeviceAttribute_deprecated",
+        "description": "Update device attribute with a given id (Deprecated - use PUT /api/v1/devices/{id}/attributes using hw id).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Device Id"
+          },
+          {
+            "in": "query",
+            "name": "presetId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Device"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Delete a device",
+        "operationId": "deleteDevice",
+        "description": "Delete a device",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Device Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/200"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/devices/groups/{deviceGroupName}/async": {
+      "put": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Update a device group configuration async",
+        "operationId": "updateDeviceGroupConfigurationAsync",
+        "description": "Update a device group configuration async",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "name": "deviceGroupName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Device group name"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "presetId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceGroupConfigJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/devices/groups/{deviceGroupName}/async/{jobId}": {
+      "put": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Get info about device group configuration async",
+        "operationId": "getDeviceGroupConfigurationJobStatus",
+        "description": "Get info about device group configuration async",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "name": "deviceGroupName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Device group name"
+          },
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "job id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceGroupConfigJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{id}/attributes": {
+      "put": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Update device attribute with a given id.",
+        "operationId": "updateDeviceAttribute",
+        "description": "Update device attribute with a given id.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Device Id"
+          },
+          {
+            "in": "query",
+            "name": "presetId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Device"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/devices/group/{deviceGroupName}": {
+      "get": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Get devices by group name",
+        "operationId": "getDevicesByGroupName",
+        "description": "Get devices by group name. Caller must satisfy the following property: isPlatformSuperAdmin()",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "name": "deviceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Device Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/200"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/models/": {
+      "get": {
+        "tags": [
+          "models"
+        ],
+        "summary": "Retrieve models",
+        "operationId": "getModels",
+        "description": "Retrieve models optionally filtering by a matching string (search), exact name (name) and version. \nCaller must have the following scopes: ['iam.models.read'].\nThe maximum number of returned values (page*size) is hard capped to 10000\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "$ref": "#/components/parameters/search"
+          },
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/orderDir"
+          },
+          {
+            "$ref": "#/components/parameters/version"
+          },
+          {
+            "$ref": "#/components/parameters/omitContent"
+          },
+          {
+            "in": "query",
+            "name": "name",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Exact name of the model to match"
+          },
+          {
+            "in": "query",
+            "name": "orderBy",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "creationDate",
+                "updatedAt"
+              ]
+            },
+            "description": "Sorting filter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelRepositoryDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/models/search": {
+      "post": {
+        "tags": [
+          "models"
+        ],
+        "summary": "Search models using arbitrary logical expression that returned model data structures should match.",
+        "operationId": "searchModels",
+        "description": "Search models using arbitrary logical expression that returned model data structures should match.\nFor example \"(metadata.description.keyword == \\\"description\\\" and version == \\\"1.0.1\\\" and metadata.path.keyword ~= \\\"model.*\\\"\". Caller must have the following scopes: ['iam.models.read'].\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelSearch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelRepositoryDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/models/names": {
+      "get": {
+        "tags": [
+          "models"
+        ],
+        "summary": "Retrieve models names",
+        "operationId": "getModelsNames",
+        "description": "Retrieve sorted list of models names. Caller must have the following scopes: ['iam.models.read'].\nResults are paginated by pageSize with \"search-after\" mechanism. To retrieve the next page of result use the after\nparameter with the last name returned by previous call.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "$ref": "#/components/parameters/search"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Retrieve names after \"after\" name. To implement paginated reads, it should be the last name returned by previous call."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelNameDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/models/{id}": {
+      "delete": {
+        "tags": [
+          "models"
+        ],
+        "summary": "Delete a Model",
+        "operationId": "deleteModel",
+        "description": "Delete a Model. Caller must have the following scopes: ['iam.models.delete'].\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "required": true,
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Model Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelRepositoryDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "models"
+        ],
+        "summary": "Get a Model by id",
+        "operationId": "getModel",
+        "description": "Get a model by id. Caller must have the following scopes: ['iam.models.read'].\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "required": true,
+            "name": "id",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Model Id",
+            "example": "w2xDliZLhy"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelRepositoryDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "models"
+        ],
+        "summary": "Update an existing model",
+        "operationId": "updateModel",
+        "description": "Update an existing model. UUIDs and property versions can be omitted since recomputed by the backend. The model version is automatically recomputed by the system and the resulting model is returned.  Caller must have the following scopes: ['iam.models.update'].\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Model ID to update"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelInDTO"
+              },
+              "example": {
+                "name": "ASimpleTestModel",
+                "data": {
+                  "type": "object",
+                  "instanceOf": "ASimpleTestModel:1.0.0",
+                  "properties": {
+                    "a": {
+                      "type": "integer"
+                    },
+                    "b": {
+                      "type": "string"
+                    },
+                    "c": {
+                      "type": "double"
+                    },
+                    "d": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelRepositoryDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/models/{name}/versions": {
+      "get": {
+        "tags": [
+          "models"
+        ],
+        "summary": "Get model versions",
+        "operationId": "getModelVersions",
+        "description": "Get model versions. Caller must have the following scopes: ['iam.models.read'].\nThe maximum number of returned values (page*size) is hard capped to 10000.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Name of the model"
+          },
+          {
+            "in": "query",
+            "name": "shared",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "The model is shared with a parent organization"
+          },
+          {
+            "in": "query",
+            "name": "fullHistory",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Return the whole history of minor/major versions"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/models": {
+      "post": {
+        "tags": [
+          "models"
+        ],
+        "summary": "Create a new model",
+        "operationId": "createModel",
+        "description": "Create a new model. Caller must have the following scopes: ['iam.models.create'].\nUUIDs and property versions are not required since recomputed by the backend.\nThe initial instanceOf property of the new model object can be omitted (by default will be initialized to 1.0.0)\nThis API will also create all the nested models or structs if not already created.\nIf the newly created model refers existing objects are structs the nested definition\nmust be consistent with the existing definitions.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelInDTO"
+              },
+              "example": {
+                "name": "ASimpleTestModel",
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "a": {
+                      "type": "integer"
+                    },
+                    "b": {
+                      "type": "string"
+                    },
+                    "c": {
+                      "type": "double"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelRepositoryWithMetadataDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/models/{id}/subOrgsEnabledToView": {
+      "put": {
+        "tags": [
+          "models"
+        ],
+        "summary": "Update the suborg visibility",
+        "operationId": "updateModelSubOrgsVisibility",
+        "description": "Update the sub organization visibility of the model. By default models belong to a specific organization. By enabling this flag models can be shared with suborganization in read only mode. Caller must have the following scopes: ['iam.models.update'].\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Model ID to update"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelSubOrgsEnabledToViewDTO"
+              },
+              "example": {
+                "data": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelSubOrgsEnabledToViewDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/models/name/{name}/subOrgsEnabledToView": {
+      "put": {
+        "tags": [
+          "models"
+        ],
+        "summary": "Update the suborg visibility.",
+        "description": "Update the suborg visibility\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Model name to update"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelSubOrgsEnabledToViewDTO"
+              },
+              "example": {
+                "data": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelSubOrgsEnabledToViewDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/models/validate": {
+      "post": {
+        "tags": [
+          "models"
+        ],
+        "summary": "Validate a model",
+        "operationId": "validateModel",
+        "description": "Validate a model",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelValidationInDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelValidationOutDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/models/paths/search": {
+      "post": {
+        "tags": [
+          "models"
+        ],
+        "summary": "Search model paths metadata.",
+        "operationId": "searchModelPaths",
+        "description": "Model path uniquely address properties inside models, and have the following structure: model_name:model_major_version/property/property.\nEach model property has structural and user defined metadata, like type, label, description, unit, tags, etc.\nThis api allows to search on all of these properties using and/or logical expressions.\nFor example \"(description.keyword == \\\"description\\\" and version == \\\"1.0.1\\\" and path.keyword ~= \\\"model.*\\\"\".\nCaller must have the following scopes: ['iam.models.read'].\nThe maximum number of returned values (page*size) is hard capped to 10000\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelPathSearch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedModelPathRepositoryDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/platformMappings/": {
+      "get": {
+        "tags": [
+          "platformMappings"
+        ],
+        "summary": "Retrieve platform mappings",
+        "operationId": "getPlatformMappings",
+        "description": "Retrieve platform mappings from preset or model id. . Caller must be authenticated.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "query",
+            "name": "presetId",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Mapping (preset) id"
+          },
+          {
+            "in": "query",
+            "name": "modeFilter",
+            "schema": {
+              "type": "string"
+            },
+            "description": "/[RWHA]+/ filter for returned mappings"
+          },
+          {
+            "in": "query",
+            "name": "modelPath",
+            "schema": {
+              "type": "string"
+            },
+            "description": "model path glob syntax to search"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/mappings/{id}": {
+      "get": {
+        "tags": [
+          "mappings"
+        ],
+        "summary": "Retrieve a mapping by id",
+        "operationId": "getMapping",
+        "description": "Retrieve a mapping by id. Caller must have the following scopes: ['iam.models.read'].\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Mapping id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "$ref": "#/components/schemas/MappingRepositoryDTO"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "mappings"
+        ],
+        "summary": "Delete a mapping by id",
+        "operationId": "deleteMapping",
+        "description": "Delete a mapping by id. Caller must have the following scopes: ['iam.models.delete'].\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Mapping id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        }
+      }
+    },
+    "/api/v1/mappings/{id}/deviceConfiguration": {
+      "get": {
+        "tags": [
+          "mappings"
+        ],
+        "summary": "Export the configuration that will be applied to the device",
+        "operationId": "getDeviceConfiguration",
+        "description": "Update a device configuration",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "name": "presetId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceConfiguration"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/mappings/": {
+      "get": {
+        "tags": [
+          "mappings"
+        ],
+        "summary": "Search mappings by name",
+        "operationId": "searchMapping",
+        "description": "Search mappings by name. Caller must have the following scopes: ['iam.models.read'].\nThe maximum number of returned values (page*size) is hard capped to 10000\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "$ref": "#/components/parameters/search"
+          },
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/orderDir"
+          },
+          {
+            "in": "query",
+            "name": "modelId",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Model id"
+          },
+          {
+            "in": "query",
+            "name": "orderBy",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "creationDate",
+                "updatedAt"
+              ]
+            },
+            "description": "Sorting filter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedMappingRepositoryDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "mappings"
+        ],
+        "summary": "Create a new mappings",
+        "operationId": "createMapping",
+        "description": "Create a new mapping. If the mapping refers to a non existing model, the model will be created accordingly. UUIDs and property version numbers of the input preset can be omitted since they will be computed by the backend according to existing models. Caller must have the following scopes: ['iam.models.create'].\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MappingInDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        }
+      }
+    },
+    "/api/v1/mappings/async": {
+      "post": {
+        "tags": [
+          "mappings"
+        ],
+        "summary": "Issue a create mapping task",
+        "operationId": "createMappingAsync",
+        "description": "Issue a create mapping task and returns immediately without waiting for the task completion. Caller must have\nthe following scopes: ['iam.models.create'].\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MappingInDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MappingJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        }
+      }
+    },
+    "/api/v1/mappings/async/{jobId}": {
+      "get": {
+        "tags": [
+          "mappings"
+        ],
+        "summary": "Get status of create mapping job",
+        "operationId": "getCreateMappingJobStatus",
+        "description": "Get the status of a create mapping job",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MappingJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/mappings/{id}/subOrgsEnabledToView": {
+      "put": {
+        "tags": [
+          "mappings"
+        ],
+        "summary": "Update the suborg visibility",
+        "operationId": "updateMappingSubOrgVisibility",
+        "description": "Update the suborg visibility. Caller must have the following scopes: ['iam.models.update'].\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Mapping id to update"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MappingsSubOrgsEnabledToViewDTO"
+              },
+              "example": {
+                "data": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MappingsSubOrgsEnabledToViewDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    },
+    "/api/v1/mappings/validate": {
+      "post": {
+        "tags": [
+          "mappings"
+        ],
+        "summary": "Validate a mapping schema",
+        "operationId": "validatePreset",
+        "description": "Validate a mapping schema. No authentication required.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/organization"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MappingInDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          }
+        }
+      }
+    }
+  }
+}
