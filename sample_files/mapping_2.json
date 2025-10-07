@@ -1,5 +1,5 @@
 {
-  "name": "Test1-Minikube_Mapping",
+  "name": "PanaTest-Minikube_Mapping",
   "data": {
     "unit": "",
     "description": "",
@@ -8,24 +8,45 @@
     "properties": {
       "S": {
         "type": "object",
-        "instanceOf": "Test1-S:1.0.0",
+        "instanceOf": "PanaTest-Minikube.S:1.0.0",
         "properties": {
           "A1": {
             "type": "object",
-            "instanceOf": "Test1-A1:1.0.0",
+            "instanceOf": "PanaTest-Minikube.S.A1:1.0.0",
             "properties": {
               "PLine2": {
                 "type": "object",
-                "instanceOf": "Test1-PLine2:1.0.0",
+                "instanceOf": "PanaTest-Minikube.S.A1.PLine2:1.0.0",
                 "properties": {
                   "WCell4": {
                     "type": "object",
-                    "instanceOf": "Test1-WCell4:1.0.0",
+                    "instanceOf": "PanaTest-Minikube.S.A1.PLine2.WCell4:1.0.0",
                     "properties": {
                       "DriverMachine": {
                         "type": "object",
-                        "instanceOf": "Test1-DriverMachine:1.0.0",
+                        "instanceOf": "PanaTest-Minikube.S.A1.PLine2.WCell4.DriverMachine:1.0.0",
                         "properties": {
+                          "IntegerValue": {
+                            "version": "1.0.0",
+                            "type": "integer",
+                            "mode": "R",
+                            "historyPolicy": {
+                              "enabled": true
+                            },
+                            "sendPolicy": {
+                              "triggers": [
+                                {
+                                  "changeMask": "value",
+                                  "minIntervalMs": 1000,
+                                  "skipFirstNChanges": 0,
+                                  "type": "onchange"
+                                }
+                              ]
+                            },
+                            "datalink": {
+                              "source": "Minikube.S.A1.PLine2.WCell4.DriverMachine.IntegerValue"
+                            }
+                          },
                           "IntegratedSin": {
                             "version": "1.0.0",
                             "type": "double",
@@ -57,20 +78,41 @@
           },
           "A2": {
             "type": "object",
-            "instanceOf": "Test1-A2:1.0.0",
+            "instanceOf": "PanaTest-Minikube.S.A2:1.0.0",
             "properties": {
               "PLine2": {
                 "type": "object",
-                "instanceOf": "Test1-PLine2:1.0.0",
+                "instanceOf": "PanaTest-Minikube.S.A2.PLine2:1.0.0",
                 "properties": {
                   "WCell3": {
                     "type": "object",
-                    "instanceOf": "Test1-WCell3:1.0.0",
+                    "instanceOf": "PanaTest-Minikube.S.A2.PLine2.WCell3:1.0.0",
                     "properties": {
                       "Modbus": {
                         "type": "object",
-                        "instanceOf": "Test1-Modbus:1.0.0",
+                        "instanceOf": "PanaTest-Minikube.S.A2.PLine2.WCell3.Modbus:1.0.0",
                         "properties": {
+                          "IntegerValue": {
+                            "version": "1.0.0",
+                            "type": "integer",
+                            "mode": "R",
+                            "historyPolicy": {
+                              "enabled": true
+                            },
+                            "sendPolicy": {
+                              "triggers": [
+                                {
+                                  "changeMask": "value",
+                                  "minIntervalMs": 1000,
+                                  "skipFirstNChanges": 0,
+                                  "type": "onchange"
+                                }
+                              ]
+                            },
+                            "datalink": {
+                              "source": "Minikube.S.A2.PLine2.WCell3.Modbus.IntegerValue"
+                            }
+                          },
                           "IntegratedSin": {
                             "version": "1.0.0",
                             "type": "double",
@@ -98,12 +140,33 @@
                   },
                   "WCell4": {
                     "type": "object",
-                    "instanceOf": "Test1-WCell4:1.0.0",
+                    "instanceOf": "PanaTest-Minikube.S.A2.PLine2.WCell4:1.0.0",
                     "properties": {
                       "DriverMachine": {
                         "type": "object",
-                        "instanceOf": "Test1-DriverMachine:1.0.0",
+                        "instanceOf": "PanaTest-Minikube.S.A2.PLine2.WCell4.DriverMachine:1.0.0",
                         "properties": {
+                          "IntegerValue": {
+                            "version": "1.0.0",
+                            "type": "integer",
+                            "mode": "R",
+                            "historyPolicy": {
+                              "enabled": true
+                            },
+                            "sendPolicy": {
+                              "triggers": [
+                                {
+                                  "changeMask": "value",
+                                  "minIntervalMs": 1000,
+                                  "skipFirstNChanges": 0,
+                                  "type": "onchange"
+                                }
+                              ]
+                            },
+                            "datalink": {
+                              "source": "Minikube.S.A2.PLine2.WCell4.DriverMachine.IntegerValue"
+                            }
+                          },
                           "IntegratedSin": {
                             "version": "1.0.0",
                             "type": "double",
@@ -137,24 +200,45 @@
       },
       "S2": {
         "type": "object",
-        "instanceOf": "Test1-S2:1.0.0",
+        "instanceOf": "PanaTest-Minikube.S2:1.0.0",
         "properties": {
           "A1": {
             "type": "object",
-            "instanceOf": "Test1-A1:1.0.0",
+            "instanceOf": "PanaTest-Minikube.S2.A1:1.0.0",
             "properties": {
               "PLine2": {
                 "type": "object",
-                "instanceOf": "Test1-PLine2:1.0.0",
+                "instanceOf": "PanaTest-Minikube.S2.A1.PLine2:1.0.0",
                 "properties": {
                   "WCell4": {
                     "type": "object",
-                    "instanceOf": "Test1-WCell4:1.0.0",
+                    "instanceOf": "PanaTest-Minikube.S2.A1.PLine2.WCell4:1.0.0",
                     "properties": {
                       "DriverMachine": {
                         "type": "object",
-                        "instanceOf": "Test1-DriverMachine:1.0.0",
+                        "instanceOf": "PanaTest-Minikube.S2.A1.PLine2.WCell4.DriverMachine:1.0.0",
                         "properties": {
+                          "IntegerValue": {
+                            "version": "1.0.0",
+                            "type": "integer",
+                            "mode": "R",
+                            "historyPolicy": {
+                              "enabled": true
+                            },
+                            "sendPolicy": {
+                              "triggers": [
+                                {
+                                  "changeMask": "value",
+                                  "minIntervalMs": 1000,
+                                  "skipFirstNChanges": 0,
+                                  "type": "onchange"
+                                }
+                              ]
+                            },
+                            "datalink": {
+                              "source": "Minikube.S2.A1.PLine2.WCell4.DriverMachine.IntegerValue"
+                            }
+                          },
                           "IntegratedSin": {
                             "version": "1.0.0",
                             "type": "double",
@@ -186,20 +270,41 @@
           },
           "A2": {
             "type": "object",
-            "instanceOf": "Test1-A2:1.0.0",
+            "instanceOf": "PanaTest-Minikube.S2.A2:1.0.0",
             "properties": {
               "PLine2": {
                 "type": "object",
-                "instanceOf": "Test1-PLine2:1.0.0",
+                "instanceOf": "PanaTest-Minikube.S2.A2.PLine2:1.0.0",
                 "properties": {
                   "WCell4": {
                     "type": "object",
-                    "instanceOf": "Test1-WCell4:1.0.0",
+                    "instanceOf": "PanaTest-Minikube.S2.A2.PLine2.WCell4:1.0.0",
                     "properties": {
                       "DriverMachine": {
                         "type": "object",
-                        "instanceOf": "Test1-DriverMachine:1.0.0",
+                        "instanceOf": "PanaTest-Minikube.S2.A2.PLine2.WCell4.DriverMachine:1.0.0",
                         "properties": {
+                          "IntegerValue": {
+                            "version": "1.0.0",
+                            "type": "integer",
+                            "mode": "R",
+                            "historyPolicy": {
+                              "enabled": true
+                            },
+                            "sendPolicy": {
+                              "triggers": [
+                                {
+                                  "changeMask": "value",
+                                  "minIntervalMs": 1000,
+                                  "skipFirstNChanges": 0,
+                                  "type": "onchange"
+                                }
+                              ]
+                            },
+                            "datalink": {
+                              "source": "Minikube.S2.A2.PLine2.WCell4.DriverMachine.IntegerValue"
+                            }
+                          },
                           "IntegratedSin": {
                             "version": "1.0.0",
                             "type": "double",
@@ -232,7 +337,7 @@
         }
       }
     },
-    "instanceOf": "Test1-Minikube:1.0.0",
+    "instanceOf": "PanaTest-Minikube:1.0.0",
     "tags": []
   }
 }
