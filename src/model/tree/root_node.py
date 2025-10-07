@@ -24,6 +24,8 @@ class RootNode(TreeNode):
         m = version_re.match(self.name)
         return m[1] if m else self.name
 
+    def get_deploy_name(self) -> str:
+        return self.name.split('-')[0]
 
     def get_intermediate_elems(self) -> list[str]:
         return self.data.get_intermediate_elems()
