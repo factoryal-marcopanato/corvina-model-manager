@@ -17,6 +17,13 @@ class DataModelRoot(RootNode):
         if self.version is None:
             self.version = '1.0.0'
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, DataModelRoot) and
+            RootNode.__eq__(self, other) and
+            self.version == other.version
+        )
+
     @classmethod
     def from_dict(cls, dikt: dict) -> 'DataModelRoot':
         d = copy.deepcopy(dikt)
@@ -27,6 +34,7 @@ class DataModelRoot(RootNode):
         data = orjson.loads(orjson.dumps(self))  # this removes problems like the CorvinaDatatype enum
         if not version_re.match(data['name']):
             data['name'] = data['name'] + ':1.0.0'
+        if not version_re.match(data['data']['instanceOf']):
             data['data']['instanceOf'] = data['data']['instanceOf'] + ':1.0.0'
         return data
 

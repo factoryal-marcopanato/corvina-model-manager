@@ -13,6 +13,22 @@ class RootNode(TreeNode):
     data: RootNodeAux
     deleted: bool | None = None
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, RootNode) and
+            TreeNode.__eq__(self, other) and
+            self.id == other.id and
+            self.name == other.name and
+            self.data == other.data and
+            self.deleted == other.deleted
+        )
+
+    def get_tree_node_children(self) -> dict[str, 'TreeNode']:
+        return {self.name: self.data}  # TODO sure???
+
+    def get_tree_node_name(self) -> str:
+        return self.clear_name
+
     @classmethod
     def from_dict(cls, dikt: dict) -> 'RootNode':
         d = copy.deepcopy(dikt)

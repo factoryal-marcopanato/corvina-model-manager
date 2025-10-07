@@ -3,6 +3,7 @@ import dataclasses
 
 from model.tree.tree_leaf import TreeLeaf
 from model.tree.tree_node import TreeNode
+from utils.corvina_version_utils import version_re
 
 
 @dataclasses.dataclass(kw_only=True)
@@ -10,6 +11,22 @@ class IntermediateNode(TreeNode):
     type: str
     instanceOf: str
     properties: dict[str, TreeNode]
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, IntermediateNode) and
+            TreeNode.__eq__(self, other) and
+            self.type == other.type and
+            self.instanceOf == other.instanceOf and
+            self.properties == other.properties  # yes, it works!!!
+        )
+
+    def get_tree_node_children(self) -> dict[str, 'TreeNode']:
+        return self.properties
+
+    def get_tree_node_name(self) -> str:
+        m = version_re.match(self.instanceOf)
+        return m[1] if m else self.instanceOf
 
     @classmethod
     def from_dict(cls, dikt: dict) -> 'IntermediateNode':

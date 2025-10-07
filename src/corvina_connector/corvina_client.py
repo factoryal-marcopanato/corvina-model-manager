@@ -8,6 +8,7 @@ from model.datamodel.datamodel_root import DataModelRoot
 from utils.corvina_version_utils import version_re
 from model.device.corvina_device import CorvinaDevice
 from model.mapping.mapping_root import MappingRoot
+from utils.dataclass_utils import BaseDataClass
 from utils.dict_utils import remove_nulls
 
 logger = logging.getLogger('app.corvina')
@@ -51,24 +52,24 @@ class CorvinaClient:
                 self._jwt_token = token['access_token']
                 # self._api_client.configuration.api_key['Authorization'] = self._jwt_token
 
-    @staticmethod
-    async def _merge_pages(session: aiohttp.ClientSession, url: str) -> list[dict]:
-        res = []
-        cur_page = 0
-        is_last_page = False
-        while not is_last_page:
-            logger.debug(f'GET {url}&page={cur_page}')
-            async with session.get(url + f'&page={cur_page}') as req:
-                data = await req.text()
-                assert req.ok, f'Got {req.status} with body {data} while asking for {url}&page={cur_page}'
-                json_data = orjson.loads(data)
-                assert 'number' in json_data and 'data' in json_data and 'last' in json_data, f'Got invalid body {json_data}'
-
-                res.extend(json_data['data'])
-                is_last_page = json_data['last']
-                cur_page += 1
-
-        return res
+    # @staticmethod
+    # async def _merge_pages(session: aiohttp.ClientSession, url: str) -> list[dict]:
+    #     res = []
+    #     cur_page = 0
+    #     is_last_page = False
+    #     while not is_last_page:
+    #         logger.debug(f'GET {url}&page={cur_page}')
+    #         async with session.get(url + f'&page={cur_page}') as req:
+    #             data = await req.text()
+    #             assert req.ok, f'Got {req.status} with body {data} while asking for {url}&page={cur_page}'
+    #             json_data = orjson.loads(data)
+    #             assert 'number' in json_data and 'data' in json_data and 'last' in json_data, f'Got invalid body {json_data}'
+    #
+    #             res.extend(json_data['data'])
+    #             is_last_page = json_data['last']
+    #             cur_page += 1
+    #
+    #     return res
 
     @staticmethod
     async def _get_json(session: aiohttp.ClientSession, path: str, **kwargs) -> dict:
@@ -85,6 +86,14 @@ class CorvinaClient:
             return orjson.loads(data)
 
     @staticmethod
+    async def _put_json(session: aiohttp.ClientSession, path: str, data: str | bytes, **kwargs) -> dict:
+        logger.debug(f'Putting {data} to {path}')
+        async with session.put(path, headers={'Content-Type': 'application/json'}, data=data, params=kwargs) as req:
+            data = await req.text()
+            assert req.ok, f'Got {req.status} with body {data} while posting {data} in {path}'
+            return orjson.loads(data)
+
+    @staticmethod
     async def _post_json(session: aiohttp.ClientSession, path: str, data: str | bytes, **kwargs) -> dict:
         logger.debug(f'Posting {data} to {path}')
         async with session.post(path, headers={'Content-Type': 'application/json'}, data=data, params=kwargs) as req:
@@ -93,7 +102,7 @@ class CorvinaClient:
             return orjson.loads(data)
 
     @staticmethod
-    def _prepare(obj: dict) -> bytes:
+    def _prepare(obj: dict | BaseDataClass) -> bytes:
         data = orjson.loads(orjson.dumps(obj))  # Not so efficient, but...
         remove_nulls(data)
         return orjson.dumps(data)
@@ -104,10 +113,13 @@ class CorvinaClient:
             base_url=f'https://{self._corvina_prefix}corvina{self._corvina_suffix}/svc/mappings/'
         )
 
-    async def _get_paged_obj(self, path: str) -> list[dict]:
-        async with self._session() as session:
-            return await self._merge_pages(session, path)
+    # async def _get_paged_obj(self, path: str) -> list[dict]:
+    #     async with self._session() as session:
+    #         return await self._merge_pages(session, path)
 
+    # ------------------------------------------------------------------------------------------------------------------
+    # Devices Part
+    # ------------------------------------------------------------------------------------------------------------------
     async def get_devices_by_id(self) -> dict[str, CorvinaDevice]:
         logger.info('Querying Devices')
         async with self._session() as s:
@@ -134,22 +146,6 @@ class CorvinaClient:
         # models = await api.get_models(organization=self._org, page_size=1000)
         # return {m.id: m for m in models.data}
 
-    async def get_datamodels_from_names(self, names: collections.abc.Iterable[str]) -> list[DataModelRoot]:
-        datamodels = await self.get_datamodels_by_id()
-        res = []
-        for name in names:
-            match = version_re.match(name)
-            if match is not None: # split model name and version
-                m_name = match[1]
-                m_version = match[2]
-                found_dms = [dm for dm in datamodels.values() if dm.name == m_name and dm.version == m_version]
-            else:  # remove ALL found versions for that name
-                found_dms = [dm for dm in datamodels.values() if dm.name == name]
-
-            if len(found_dms) > 0:  # more than one datamodel can be found (e.g. more than one version available)
-                res.extend(found_dms)
-        return res
-
     async def create_data_model(self, data_model: DataModelRoot):
         async with self._session() as s:
             # Sample Payload
@@ -159,6 +155,16 @@ class CorvinaClient:
             logger.debug(f'Got {orjson.dumps(new_data_model_root)}')
 
             # TODO should check for equality, or better, set ids etc...
+
+    async def update_data_model(self, old_data_model: DataModelRoot, new_data_model: DataModelRoot) -> DataModelRoot:
+        async with self._session() as s:
+            data = await self._put_json(
+                s, f'api/v1/models/{old_data_model.id}',
+                self._prepare(new_data_model), organization=self._org
+            )
+            logger.debug(f'Got {orjson.dumps(data)}')  # TODO dump our object instead of the raw response
+            new_data_model_root = DataModelRoot.from_dict(data['value'])
+            return new_data_model
 
     async def delete_data_model(self, data_model: DataModelRoot):
         await data_model.maybe_fetch_id(self)

@@ -10,6 +10,14 @@ class DataModelLeaf(TreeLeaf):
     version: str | None = None
     type: CorvinaDatatype
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, DataModelLeaf) and
+            TreeLeaf.__eq__(self, other) and
+            self.version == other.version and
+            self.type == other.type
+        )
+
     def __post_init__(self):
         if self.version is None:
             self.version = '1.0.0'

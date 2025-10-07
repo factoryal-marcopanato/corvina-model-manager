@@ -13,6 +13,17 @@ class RootNodeAux(IntermediateNode):
     UUID: str | None = None
     tags: list[str] | None = None
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, RootNodeAux) and
+            IntermediateNode.__eq__(self, other) and
+            self.label == other.label and
+            self.unit == other.unit and
+            self.description == other.description and
+            self.UUID == other.UUID and
+            self.tags == other.tags
+        )
+
     @classmethod
     def from_dict(cls, dikt: dict) -> 'RootNodeAux':
         d = copy.deepcopy(dikt)

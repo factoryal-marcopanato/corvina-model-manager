@@ -12,6 +12,13 @@ from model.tree.root_node_aux import RootNodeAux
 class MappingRoot(RootNode):
     modelId: str | None = None
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, MappingRoot) and
+            RootNode.__eq__(self, other) and
+            self.modelId == other.modelId
+        )
+
     @classmethod
     def from_dict(cls, dikt: dict) -> 'MappingRoot':
         d = copy.deepcopy(dikt)

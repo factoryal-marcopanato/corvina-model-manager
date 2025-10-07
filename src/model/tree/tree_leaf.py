@@ -1,11 +1,17 @@
+import abc
 import dataclasses
 
 from model.tree.tree_node import TreeNode
 
 
 @dataclasses.dataclass(kw_only=True)
-class TreeLeaf(TreeNode):
-    pass
+class TreeLeaf(TreeNode, abc.ABC):
+
+    def get_tree_node_children(self) -> dict[str, 'TreeNode']:
+        return {}
+
+    def get_tree_node_name(self) -> str:
+        assert False  # TODO this should not be called!!!
 
     @classmethod
     def from_dict(cls, dikt: dict) -> 'TreeLeaf':

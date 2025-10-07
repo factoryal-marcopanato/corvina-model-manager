@@ -17,16 +17,19 @@ l0 = utils.logging_utils.setup_logging()
 def create_arguments_parser() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        'op', choices=['sync', 'remove'], required=True,
+        'op', choices=['sync', 'remove'],
         help=(
             'The operation to perform, where: \n'
             '\t\tsync applies the provided model and mapping\n'
             '\t\tremove deletes model and mapping (name is took from provided files or by the --deploy-name arg)'
         )
     )
-    parser.add_argument('datamodel', type=str, required=False, help='Path of the datamodel.json file to handle (required when syncing)')
-    parser.add_argument('mapping', type=str, required=False, help='Path of the mapping.json file to handle (required when syncing)')
+    parser.add_argument('-d', '--datamodel', required=False, type=str, help='Path of the datamodel.json file to handle (required when syncing)')
+    parser.add_argument('-m', '--mapping', required=False, type=str, help='Path of the mapping.json file to handle (required when syncing)')
     parser.add_argument('--deploy-name', type=str, required=False)
+    parser.add_argument('--dry_run', action='store_true', default=False, required=False)
+
+    # TODO manca il device id dove applicare...
 
     args = parser.parse_args()
 
@@ -50,7 +53,7 @@ async def async_main():
         corvina_suffix=configuration.corvina_suffix
     )
     await connector.login()
-    manager = CorvinaManager(connector)
+    manager = CorvinaManager(connector, args.dry_run)
 
     datamodel: DataModelRoot | None = None
     mapping: MappingRoot | None = None
@@ -71,7 +74,7 @@ async def async_main():
     assert (datamodel is None and mapping is None) or (datamodel is not None and mapping is not None), 'Provide always both datamodel and mapping or nothing, not a single one'
     assert datamodel is None or mapping is None or datamodel.get_deploy_name() == mapping.get_deploy_name(), f'Found different deploy names in loaded file! {datamodel.get_deploy_name()} != {mapping.get_deploy_name()}'
 
-    assert deploy_name is None or deploy_name == datamodel.get_deploy_name(), 'Provided deploy name does not match the loaded files one'
+    assert deploy_name is None or datamodel is None or deploy_name == datamodel.get_deploy_name(), 'Provided deploy name does not match the loaded files one'
 
     if args.op == 'sync':
         l0.info('Syncing')
@@ -83,6 +86,8 @@ async def async_main():
         else:
             l0.info(f'Removing deploy {mapping.get_deploy_name()} (from files)')
             await manager.remove_deploy_from_files(datamodel, mapping)
+    else:
+        l0.info('Nothing to do')
 
     # dm = DataModelRoot.from_dict(await read_json_async('sample_files/datamodel_1.json'))
     # mapping = MappingRoot.from_dict(await read_json_async('sample_files/mapping_1.json'))

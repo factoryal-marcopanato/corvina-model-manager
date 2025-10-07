@@ -14,6 +14,16 @@ class MappingLeaf(DataModelLeaf):
     sendPolicy: SendPolicyDto
     datalink: DataLinkDto
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, MappingLeaf) and
+            DataModelLeaf.__eq__(self, other) and
+            self.mode == other.mode and
+            self.historyPolicy == other.historyPolicy and
+            self.sendPolicy == other.sendPolicy and
+            self.datalink == other.datalink
+        )
+
     @staticmethod
     def create_default(
         source: str,
