@@ -8,7 +8,7 @@ from utils.corvina_version_utils import version_re
 
 @dataclasses.dataclass(kw_only=True)
 class IntermediateNode(TreeNode):
-    type: str
+    type: str  # object (always?)
     instanceOf: str
     properties: dict[str, TreeNode]
 

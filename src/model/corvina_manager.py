@@ -3,6 +3,8 @@ import functools
 import logging
 import collections.abc
 
+import orjson
+
 from corvina_connector.corvina_client import CorvinaClient
 from model.datamodel.datamodel_leaf import DataModelLeaf
 from model.datamodel.datamodel_root import DataModelRoot
@@ -11,6 +13,7 @@ from model.semver_version import SemverVersion
 from model.tree.intermediate_node import IntermediateNode
 from model.tree.tree_node import TreeNode
 from utils.corvina_version_utils import version_re
+from utils.tree_utils import compute_data_model_difference_map
 from utils.tree_visit_utils import dfs, path_append
 
 logger = logging.getLogger('app.model_manager')
@@ -38,9 +41,9 @@ class CorvinaManager:
 
         if len(matching_models) > 0:
             logger.info(f'Model found in Corvina (id={matching_models[0].id})! Performing automatic migration')
-            # new_data_model = await self._perform_model_upgrade(matching_models[0], data_model)
             if not self._dry_run:
-                new_data_model = await self._connector.update_data_model(matching_models[0], data_model)
+                # new_data_model = await self._connector.update_data_model(matching_models[0], data_model)
+                new_data_model = await self._perform_model_upgrade(matching_models[0], data_model)
                 # TODO do something also for the mapping part
         else:
             logger.info('Model and mapping not found in Corvina!')
@@ -138,19 +141,36 @@ class CorvinaManager:
             target_dict[path_append(path, node.get_tree_node_name())] = SemverVersion.from_string(node.version)
         return True
 
-    async def _perform_model_upgrade(self, corvina_current_model: DataModelRoot, new_model: DataModelRoot):
+    # @staticmethod
+    # def _a(map_dict: dict[str, NodeDiff], node: TreeNode, path: str) -> bool:
+    #     if isinstance(node, DataModelRoot):
+    #         target_dict[path_append(path, node.get_tree_node_name())] = SemverVersion.from_string(node.version)
+    #     elif isinstance(node, IntermediateNode):
+    #         target_dict[path_append(path, node.get_tree_node_name())] = SemverVersion.from_instance_of_string(
+    #             node.instanceOf)
+    #     elif isinstance(node, DataModelLeaf):
+    #         target_dict[path_append(path, node.get_tree_node_name())] = SemverVersion.from_string(node.version)
+    #     return True
+
+    async def _perform_model_upgrade(self, corvina_current_model: DataModelRoot, new_model: DataModelRoot) -> DataModelRoot:
         if self._all_models_by_id is None:
             self._all_models_by_id = await self._connector.get_datamodels_by_id()
 
-        models_by_name_and_version: dict[str, DataModelRoot] = {
-            f'{m.clear_name}:{m.version}': m for m in self._all_models_by_id.values()
-        }
+        diff_map = compute_data_model_difference_map(corvina_current_model, new_model)
+        logger.info(orjson.dumps(diff_map))
+
+        # models_by_name_and_version: dict[str, DataModelRoot] = {
+        #     f'{m.clear_name}:{m.version}': m for m in self._all_models_by_id.values()
+        # }
 
         # Compute Initial State Versions # TODO probably useless
         # corvina_current_model_versions_by_path: dict[str, SemverVersion] = {}
         # dfs(corvina_current_model, functools.partial(self._model_version_dict_builder, corvina_current_model_versions_by_path))
         # original_corvina_current_model_versions_by_path = copy.deepcopy(corvina_current_model_versions_by_path)
 
-        # IDEA: compute the difference graph of the two models, then apply new models using a DFS on the graph
-        new_model_copy = copy.deepcopy(new_model)
+        # IDEA: BOH compute the difference graph of the two models, then apply new models using a DFS on the graph
+        # new_model_copy = copy.deepcopy(new_model)
 
+        # IDEA v3:
+
+        return new_model
