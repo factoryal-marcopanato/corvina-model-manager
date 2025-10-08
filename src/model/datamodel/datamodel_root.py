@@ -2,7 +2,7 @@ import copy
 import orjson
 import dataclasses
 
-
+from model.tree.intermediate_node import IntermediateNode
 # from corvina_connector.corvina_client import CorvinaClient
 from model.tree.root_node import RootNode
 from model.tree.root_node_aux import RootNodeAux
@@ -29,6 +29,19 @@ class DataModelRoot(RootNode):
         d = copy.deepcopy(dikt)
         d['data'] = RootNodeAux.from_dict(dikt.get('data') or dikt['json'])
         return DataModelRoot(**cls.remove_extra_fields(d))
+
+    @classmethod
+    def from_intermediate_node(cls, node: IntermediateNode) -> 'DataModelRoot':
+        # assert not is_leaf(node), f'Cannot create a DataModelRoot starting from a Leaf! {orjson.dumps(node)}'
+
+        match = version_re.match(node.instanceOf)
+        return DataModelRoot(
+            id=None,
+            name=match.group(1),
+            data=RootNodeAux.from_intermediate_node(node),
+            deleted=False,
+            version=match.group(2)
+        )
 
     def get_create_model_payload(self) -> dict:
         data = orjson.loads(orjson.dumps(self))  # this removes problems like the CorvinaDatatype enum

@@ -5,7 +5,6 @@ import aiohttp
 import logging
 
 from model.datamodel.datamodel_root import DataModelRoot
-from utils.corvina_version_utils import version_re
 from model.device.corvina_device import CorvinaDevice
 from model.mapping.mapping_root import MappingRoot
 from utils.dataclass_utils import BaseDataClass
@@ -40,7 +39,7 @@ class CorvinaClient:
         self._jwt_token: str | None = None
 
     async def login(self):
-        logger.info(f'Logging client {self._username} to corvina {self._corvina_prefix} org {self._org}')
+        logger.info(f'Logging client {self._username} to https://{self._corvina_prefix}corvina{self._corvina_suffix} org {self._org}')
         async with aiohttp.ClientSession(auth=aiohttp.BasicAuth(self._username, self._token)) as session:
             async with session.post(
                 url=f'https://auth.corvina{self._corvina_suffix}/auth/realms/{self._org}/protocol/openid-connect/token',
@@ -146,17 +145,20 @@ class CorvinaClient:
         # models = await api.get_models(organization=self._org, page_size=1000)
         # return {m.id: m for m in models.data}
 
-    async def create_data_model(self, data_model: DataModelRoot):
+    async def create_data_model(self, data_model: DataModelRoot) -> DataModelRoot:
         async with self._session() as s:
             # Sample Payload
             # {"name":"prova:1.0.0","data":{"type":"object","instanceOf":"prova:1.0.0","properties":{"a":{"type":"integer"}},"label":"","unit":"","description":"","tags":[]}}
             data = await self._post_json(s, 'api/v1/models', self._prepare(data_model.get_create_model_payload()), organization=self._org)
             new_data_model_root = DataModelRoot.from_dict(data)
             logger.debug(f'Got {orjson.dumps(new_data_model_root)}')
+            return new_data_model_root
 
             # TODO should check for equality, or better, set ids etc...
 
     async def update_data_model(self, old_data_model: DataModelRoot, new_data_model: DataModelRoot) -> DataModelRoot:
+        await old_data_model.maybe_fetch_id(self)
+
         async with self._session() as s:
             data = await self._put_json(
                 s, f'api/v1/models/{old_data_model.id}',
@@ -164,7 +166,17 @@ class CorvinaClient:
             )
             logger.debug(f'Got {orjson.dumps(data)}')  # TODO dump our object instead of the raw response
             new_data_model_root = DataModelRoot.from_dict(data['value'])
-            return new_data_model
+            return new_data_model_root
+
+    async def update_data_model_by_id(self, data_model_id: str, new_data_model: DataModelRoot) -> DataModelRoot:
+        async with self._session() as s:
+            data = await self._put_json(
+                s, f'api/v1/models/{data_model_id}',
+                self._prepare(new_data_model), organization=self._org
+            )
+            logger.debug(f'Got {orjson.dumps(data)}')  # TODO dump our object instead of the raw response
+            new_data_model_root = DataModelRoot.from_dict(data['value'])
+            return new_data_model_root
 
     async def delete_data_model(self, data_model: DataModelRoot):
         await data_model.maybe_fetch_id(self)

@@ -27,7 +27,7 @@ def create_arguments_parser() -> argparse.Namespace:
     parser.add_argument('-d', '--datamodel', required=False, type=str, help='Path of the datamodel.json file to handle (required when syncing)')
     parser.add_argument('-m', '--mapping', required=False, type=str, help='Path of the mapping.json file to handle (required when syncing)')
     parser.add_argument('--deploy-name', type=str, required=False)
-    parser.add_argument('--dry_run', action='store_true', default=False, required=False)
+    parser.add_argument('--dry-run', action='store_true', default=False, required=False)
 
     # TODO manca il device id dove applicare...
 

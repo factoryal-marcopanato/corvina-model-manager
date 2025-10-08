@@ -5,10 +5,12 @@ import collections.abc
 
 import orjson
 
+import configuration
 from corvina_connector.corvina_client import CorvinaClient
 from model.datamodel.datamodel_leaf import DataModelLeaf
 from model.datamodel.datamodel_root import DataModelRoot
 from model.mapping.mapping_root import MappingRoot
+from model.node_diff import NodeDiff, DiffEnum
 from model.semver_version import SemverVersion
 from model.tree.intermediate_node import IntermediateNode
 from model.tree.tree_node import TreeNode
@@ -41,10 +43,9 @@ class CorvinaManager:
 
         if len(matching_models) > 0:
             logger.info(f'Model found in Corvina (id={matching_models[0].id})! Performing automatic migration')
-            if not self._dry_run:
-                # new_data_model = await self._connector.update_data_model(matching_models[0], data_model)
-                new_data_model = await self._perform_model_upgrade(matching_models[0], data_model)
-                # TODO do something also for the mapping part
+            # new_data_model = await self._connector.update_data_model(matching_models[0], data_model)
+            new_data_model = await self._perform_model_upgrade(matching_models[0], data_model)
+            # TODO do something also for the mapping part
         else:
             logger.info('Model and mapping not found in Corvina!')
             await self._create_new_model_and_mapping(data_model, mapping)
@@ -105,7 +106,7 @@ class CorvinaManager:
                     logger.exception(f'Cannot delete model {model.name}:{model.version}')
 
     async def _create_new_model_and_mapping(self, model: DataModelRoot, mapping: MappingRoot):
-        logger.info(f'Creating model {model.name}')
+        logger.info(f'Creating model {model.name} {model.version}')
         if not self._dry_run:
             await self._connector.create_data_model(model)
 
@@ -124,7 +125,7 @@ class CorvinaManager:
                 m_name = match[1]
                 m_version = match[2]
                 found_dms = [dm for dm in self._all_models_by_id.values() if dm.name == m_name and dm.version == m_version]
-            else:  # remove ALL found versions for that name
+            else:  # return ALL found versions for that name
                 found_dms = [dm for dm in self._all_models_by_id.values() if dm.name == name]
 
             if len(found_dms) > 0:  # more than one datamodel can be found (e.g. more than one version available)
@@ -156,21 +157,70 @@ class CorvinaManager:
         if self._all_models_by_id is None:
             self._all_models_by_id = await self._connector.get_datamodels_by_id()
 
+        logger.info('Computing differences between old and new models')
         diff_map = compute_data_model_difference_map(corvina_current_model, new_model)
-        logger.info(orjson.dumps(diff_map))
+        logger.debug(orjson.dumps(diff_map))
 
-        # models_by_name_and_version: dict[str, DataModelRoot] = {
-        #     f'{m.clear_name}:{m.version}': m for m in self._all_models_by_id.values()
-        # }
+        logger.info('Sorting differences by inverse depth')
+        differences_by_level: dict[int, list[NodeDiff]] = {}
+        for idd, diff in diff_map.items():
+            depth_index = idd.count(configuration.tree_path_separator_char) + 1
+            if depth_index not in differences_by_level: differences_by_level[depth_index] = []
+            differences_by_level[depth_index].append(diff)
+        logger.debug(orjson.dumps({str(k): v for (k,v) in differences_by_level.items()}))
+        diff_depths = sorted(differences_by_level.keys(), reverse=True)
 
-        # Compute Initial State Versions # TODO probably useless
-        # corvina_current_model_versions_by_path: dict[str, SemverVersion] = {}
-        # dfs(corvina_current_model, functools.partial(self._model_version_dict_builder, corvina_current_model_versions_by_path))
-        # original_corvina_current_model_versions_by_path = copy.deepcopy(corvina_current_model_versions_by_path)
+        for depth in diff_depths:
+            logger.info(f'Parsing depth {depth}')
+            for diff in differences_by_level[depth]:
+                logger.debug(f'Parsing diff {orjson.dumps(diff)}')
+                if diff.op == DiffEnum.NEW_NODE:
+                    assert isinstance(diff.node, IntermediateNode)
+                    logger.info(f'Creating model {diff.node.get_tree_node_name()} {diff.node.get_node_version()}')
+                    if not self._dry_run:
+                        created_model = await self._connector.create_data_model(DataModelRoot.from_intermediate_node(diff.node))
+                        diff.new_version = created_model.version
+                    else:
+                        diff.new_version = '9.9.9'
+                elif diff.op == DiffEnum.DELETED_NODE:
+                    assert isinstance(diff.node, IntermediateNode)
+                    logger.info(f'Deleting model {diff.node.get_tree_node_name()} {diff.node.get_node_version()}')
+                    if not self._dry_run:
+                        await self._connector.delete_data_model(DataModelRoot.from_intermediate_node(diff.node))
+                    # TODO store the created model version in current datamodel...
+                    # TODO should check all child elements... HELP!!!
+                elif diff.op == DiffEnum.NODE_CHANGED:
+                    assert isinstance(diff.node, IntermediateNode)
+                    logger.debug(f'Extracting model id from {diff.node.get_tree_node_name()}')
+                    old_models = await self._get_datamodels_from_names([diff.node.get_tree_node_name()])
+                    assert len(old_models) > 0 and old_models[0].id is not None, f'Cannot find id for {diff.node.get_tree_node_name()}! Found {old_models}'
 
-        # IDEA: BOH compute the difference graph of the two models, then apply new models using a DFS on the graph
-        # new_model_copy = copy.deepcopy(new_model)
+                    # Fix the node to apply!
+                    if depth < len(diff_depths):
+                        sublevel_diffs = differences_by_level[depth + 1]
+                        cur_node_children = diff.node.get_tree_node_children()
+                        for sublevel_diff in sublevel_diffs:
+                            if sublevel_diff.new_version is not None:
+                                # Set new version!
+                                child_name = sublevel_diff.path.split(configuration.tree_path_separator_char)[-1]
+                                if child_name not in cur_node_children:
+                                    continue
+                                child_node = cur_node_children[child_name]
+                                assert isinstance(child_node, IntermediateNode)
+                                child_node.instanceOf = child_node.get_tree_node_name() + ':' + sublevel_diff.new_version
 
-        # IDEA v3:
+                    logger.info(f'Upgrading model (id={old_models[0].id}) {diff.node.get_tree_node_name()} {diff.node.get_node_version()}')
+                    if not self._dry_run:
+                        upgraded_model = await self._connector.update_data_model_by_id(
+                            old_models[0].id, DataModelRoot.from_intermediate_node(diff.node)
+                        )
+                        logger.info(f'New version of {diff.node.get_tree_node_name()} is {upgraded_model.version}!')
+                        diff.new_version = upgraded_model.version
+                    else:
+                        diff.new_version = '9.9.9'
+                else:
+                    assert False, f'Invalid op? {diff.op}'
+
+        # TODO set the new version of the "new_model" obj
 
         return new_model

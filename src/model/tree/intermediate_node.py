@@ -28,6 +28,14 @@ class IntermediateNode(TreeNode):
         m = version_re.match(self.instanceOf)
         return m[1] if m else self.instanceOf
 
+    def get_node_version(self) -> str:
+        """
+        Returns the string "1.0.0" or the effective version
+        :return:
+        """
+        m = version_re.match(self.instanceOf)
+        return m[2] if m else self.instanceOf
+
     @classmethod
     def from_dict(cls, dikt: dict) -> 'IntermediateNode':
         d = copy.deepcopy(dikt)

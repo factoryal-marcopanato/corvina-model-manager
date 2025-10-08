@@ -1,6 +1,8 @@
 import copy
 import dataclasses
 
+import orjson
+
 from model.tree.intermediate_node import IntermediateNode
 from model.tree.tree_leaf import TreeLeaf
 
@@ -31,5 +33,15 @@ class RootNodeAux(IntermediateNode):
             if p['type'] == 'object': # intermediate
                 d['properties'][p_name] = IntermediateNode.from_dict(p)
             else: # leaf
+                d['properties'][p_name] = TreeLeaf.from_dict(p)
+        return RootNodeAux(**cls.remove_extra_fields(d))
+
+    @classmethod
+    def from_intermediate_node(cls, intermediate_node: IntermediateNode) -> 'RootNodeAux':
+        d = copy.deepcopy(orjson.loads(orjson.dumps(intermediate_node)))
+        for p_name, p in d['properties'].items():
+            if p['type'] == 'object':  # intermediate
+                d['properties'][p_name] = IntermediateNode.from_dict(p)
+            else:  # leaf
                 d['properties'][p_name] = TreeLeaf.from_dict(p)
         return RootNodeAux(**cls.remove_extra_fields(d))

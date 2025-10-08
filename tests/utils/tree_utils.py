@@ -1,5 +1,4 @@
 
-import json
 import unittest
 
 import orjson
@@ -18,6 +17,6 @@ class TreeUtilsTestCase(unittest.TestCase):
         new_model = DataModelRoot.from_dict(orjson.loads(new_model_str))
 
         diff_dict = compute_data_model_difference_map(old_model, new_model)
-        print(diff_dict)
+        print(orjson.dumps(diff_dict))
 
         self.assertTrue(True)
