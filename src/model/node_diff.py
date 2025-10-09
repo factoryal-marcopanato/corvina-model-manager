@@ -9,9 +9,9 @@ class DiffEnum(enum.Enum):
     NEW_NODE = 'new_node'
     DELETED_NODE = 'deleted_node'
     NODE_CHANGED = 'node_changed'
-    # NEW_LEAF = 'new_leaf'
-    # DELETED_LEAF = 'deleted_leaf'
-    # LEAF_CHANGED = 'leaf'
+    NEW_LEAF = 'new_leaf'
+    DELETED_LEAF = 'deleted_leaf'
+    LEAF_CHANGED = 'leaf'
 
 
 @dataclasses.dataclass

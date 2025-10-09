@@ -15,7 +15,7 @@ from model.semver_version import SemverVersion
 from model.tree.intermediate_node import IntermediateNode
 from model.tree.tree_node import TreeNode
 from utils.corvina_version_utils import version_re
-from utils.tree_utils import compute_data_model_difference_map
+from utils.tree_utils import compute_data_model_difference_map, go_to_path
 from utils.tree_visit_utils import dfs, path_append
 
 logger = logging.getLogger('app.model_manager')
@@ -45,7 +45,7 @@ class CorvinaManager:
             logger.info(f'Model found in Corvina (id={matching_models[0].id})! Performing automatic migration')
             # new_data_model = await self._connector.update_data_model(matching_models[0], data_model)
             new_data_model = await self._perform_model_upgrade(matching_models[0], data_model)
-            # TODO do something also for the mapping part
+            await self._perform_mapping_upgrade(new_data_model, mapping)  # TODO save the new mapping?
         else:
             logger.info('Model and mapping not found in Corvina!')
             await self._create_new_model_and_mapping(data_model, mapping)
@@ -218,9 +218,38 @@ class CorvinaManager:
                         diff.new_version = upgraded_model.version
                     else:
                         diff.new_version = '9.9.9'
+                elif diff.op == DiffEnum.NEW_LEAF:  # Probably nothing to do...
+                    pass
+                elif diff.op == DiffEnum.DELETED_LEAF:  # Probably nothing to do...
+                    pass
                 else:
-                    assert False, f'Invalid op? {diff.op}'
+                    assert False, f'Not yet supported op! {diff.op}'
 
-        # TODO set the new version of the "new_model" obj
+        if 1 in differences_by_level:
+            updated_root_node = differences_by_level[1][0]
+            assert isinstance(updated_root_node.node, IntermediateNode)
+            updated_model = DataModelRoot.from_intermediate_node(updated_root_node.node)
+            updated_model.data.label = new_model.data.label
+            updated_model.data.unit = new_model.data.unit
+            updated_model.data.description = new_model.data.description
+            updated_model.data.UUID = new_model.data.UUID
+            updated_model.data.tags = new_model.data.tags
+            return updated_model
 
         return new_model
+
+    @staticmethod
+    def _mapping_update_fun(mapping_to_edit: MappingRoot, node: TreeNode, path: str) -> bool:
+        if isinstance(node, IntermediateNode):
+            mapping_node = go_to_path(mapping_to_edit, path.split(configuration.tree_path_separator_char))
+            assert isinstance(mapping_node, IntermediateNode), f'Boh {orjson.dumps(mapping_node)} in path {path}'
+            if node.get_node_version() != mapping_node.get_node_version():
+                logger.debug(f'Upgrading {path} from {node.get_node_version()} to {mapping_node.get_node_version()}')
+                mapping_node.instanceOf = node.get_tree_node_name() + ':' + node.get_node_version()
+        return True
+
+    async def _perform_mapping_upgrade(self, upgraded_model: DataModelRoot, mapping: MappingRoot):
+        logger.info('Setting new model versions in mapping')
+        dfs(mapping, functools.partial(self._mapping_update_fun, mapping))
+
+        logger.debug(f'Got {orjson.dumps(mapping)}')

@@ -44,7 +44,7 @@ def _compute_data_model_difference_map_aux(
     # Leaf base case
     if isinstance(new_node, DataModelLeaf):  # and isinstance(current_node, TreeLeaf): # (redundant since they have the same type)
         if current_node != new_node:
-            # map_dict[path_append(path, current_node_name)] = NodeDiff(DiffEnum.LEAF_CHANGED, new_node)  # Useless
+            map_dict[path_append(path, current_node_name)] = NodeDiff(DiffEnum.LEAF_CHANGED, new_node, path_append(path, current_node_name))
             return False
         return True
 
@@ -58,12 +58,17 @@ def _compute_data_model_difference_map_aux(
 
     for removed_child_name in removed_child_names:
         child = current_node.get_tree_node_children()[removed_child_name]
-        if not is_leaf(child):
-            map_dict[path_append(path, removed_child_name)] = NodeDiff(DiffEnum.DELETED_NODE, child, path_append(path, removed_child_name))
+
+        map_dict[path_append(path, removed_child_name)] = NodeDiff(
+            DiffEnum.DELETED_LEAF if is_leaf(child) else DiffEnum.DELETED_NODE,
+            child, path_append(path, removed_child_name)
+        )
     for new_child_name in new_child_names:
         child = new_node.get_tree_node_children()[new_child_name]
-        if not is_leaf(child):
-            map_dict[path_append(path, new_child_name)] = NodeDiff(DiffEnum.NEW_NODE, child, path_append(path, new_child_name))
+        map_dict[path_append(path, new_child_name)] = NodeDiff(
+            DiffEnum.NEW_LEAF if is_leaf(child) else DiffEnum.NEW_NODE,
+            child, path_append(path, new_child_name)
+        )
 
     res = len(common_child_names) == len(new_node_child_names) == len(cur_child_names)  # Start True if children have same names
     for common_child_name in common_child_names:
