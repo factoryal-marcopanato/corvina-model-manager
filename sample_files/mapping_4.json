@@ -67,6 +67,27 @@
                             "datalink": {
                               "source": "Minikube.S.A1.PLine2.WCell4.DriverMachine.IntegratedSin"
                             }
+                          },
+                          "MyPersistentValue": {
+                            "version": "1.0.0",
+                            "type": "string",
+                            "mode": "R",
+                            "historyPolicy": {
+                              "enabled": true
+                            },
+                            "sendPolicy": {
+                              "triggers": [
+                                {
+                                  "changeMask": "value",
+                                  "minIntervalMs": 1000,
+                                  "skipFirstNChanges": 0,
+                                  "type": "onchange"
+                                }
+                              ]
+                            },
+                            "datalink": {
+                              "source": "Minikube.S.A1.PLine2.WCell4.DriverMachine.MyPersistentValue"
+                            }
                           }
                         }
                       }
@@ -220,6 +241,27 @@
                             "datalink": {
                               "source": "Minikube.S.A2.PLine2.WCell3.Modbus.IntegratedSin"
                             }
+                          },
+                          "MyPersistentValue": {
+                            "version": "1.0.0",
+                            "type": "string",
+                            "mode": "R",
+                            "historyPolicy": {
+                              "enabled": true
+                            },
+                            "sendPolicy": {
+                              "triggers": [
+                                {
+                                  "changeMask": "value",
+                                  "minIntervalMs": 1000,
+                                  "skipFirstNChanges": 0,
+                                  "type": "onchange"
+                                }
+                              ]
+                            },
+                            "datalink": {
+                              "source": "Minikube.S.A2.PLine2.WCell3.Modbus.MyPersistentValue"
+                            }
                           }
                         }
                       }
@@ -273,6 +315,27 @@
                             },
                             "datalink": {
                               "source": "Minikube.S.A2.PLine2.WCell4.DriverMachine.IntegratedSin"
+                            }
+                          },
+                          "MyPersistentValue": {
+                            "version": "1.0.0",
+                            "type": "string",
+                            "mode": "R",
+                            "historyPolicy": {
+                              "enabled": true
+                            },
+                            "sendPolicy": {
+                              "triggers": [
+                                {
+                                  "changeMask": "value",
+                                  "minIntervalMs": 1000,
+                                  "skipFirstNChanges": 0,
+                                  "type": "onchange"
+                                }
+                              ]
+                            },
+                            "datalink": {
+                              "source": "Minikube.S.A2.PLine2.WCell4.DriverMachine.MyPersistentValue"
                             }
                           }
                         }
@@ -460,6 +523,27 @@
                             "datalink": {
                               "source": "Minikube.S2.A1.PLine2.WCell4.DriverMachine.IntegratedSin"
                             }
+                          },
+                          "MyPersistentValue": {
+                            "version": "1.0.0",
+                            "type": "string",
+                            "mode": "R",
+                            "historyPolicy": {
+                              "enabled": true
+                            },
+                            "sendPolicy": {
+                              "triggers": [
+                                {
+                                  "changeMask": "value",
+                                  "minIntervalMs": 1000,
+                                  "skipFirstNChanges": 0,
+                                  "type": "onchange"
+                                }
+                              ]
+                            },
+                            "datalink": {
+                              "source": "Minikube.S2.A1.PLine2.WCell4.DriverMachine.MyPersistentValue"
+                            }
                           }
                         }
                       }
@@ -612,6 +696,27 @@
                             },
                             "datalink": {
                               "source": "Minikube.S2.A2.PLine2.WCell4.DriverMachine.IntegratedSin"
+                            }
+                          },
+                          "MyPersistentValue": {
+                            "version": "1.0.0",
+                            "type": "string",
+                            "mode": "R",
+                            "historyPolicy": {
+                              "enabled": true
+                            },
+                            "sendPolicy": {
+                              "triggers": [
+                                {
+                                  "changeMask": "value",
+                                  "minIntervalMs": 1000,
+                                  "skipFirstNChanges": 0,
+                                  "type": "onchange"
+                                }
+                              ]
+                            },
+                            "datalink": {
+                              "source": "Minikube.S2.A2.PLine2.WCell4.DriverMachine.MyPersistentValue"
                             }
                           }
                         }
