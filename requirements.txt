@@ -9,7 +9,7 @@ orjson==3.11.3
 
 # From OpenApi files
 # python-dateutil==2.9.0
-pydantic==2.11.10
+# pydantic==2.11.10
 # python_dateutil >= 2.8.2
-aiohttp-retry==2.9.1
+# aiohttp-retry==2.9.1
 # typing-extensions >= 4.7.1
