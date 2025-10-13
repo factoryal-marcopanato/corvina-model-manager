@@ -205,16 +205,20 @@ class CorvinaManager:
                                 child_name = sublevel_diff.path.split(configuration.tree_path_separator_char)[-1]
                                 if child_name not in cur_node_children:
                                     continue
-                                child_node = cur_node_children[child_name]
-                                assert isinstance(child_node, IntermediateNode)
-                                child_node.instanceOf = child_node.get_tree_node_name() + ':' + sublevel_diff.new_version
+
+                                # Not-tanto-smart approach: query Corvina for the new model...
+                                cur_node_children[child_name] = (await self._connector.get_datamodel_from_name(cur_node_children[child_name].get_tree_node_name()))[0].data
+
+                                # child_node = cur_node_children[child_name]
+                                # assert isinstance(child_node, IntermediateNode)
+                                # child_node.instanceOf = child_node.get_tree_node_name() + ':' + sublevel_diff.new_version
 
                     equal_node = go_to_path(corvina_current_model, diff.path.split(configuration.tree_path_separator_char))
                     assert isinstance(equal_node, IntermediateNode)
                     if diff.node.get_node_version() == '1.0.0':
                         diff.node.instanceOf = equal_node.instanceOf
 
-                    maybe_set_deprecated_leaves(diff.node, diff.path, equal_node)
+                    # maybe_set_deprecated_leaves(diff.node, diff.path, equal_node)
 
                     logger.info(f'Upgrading model (id={old_models[0].id}) {diff.node.get_tree_node_name()} {diff.node.get_node_version()}')
                     if not self._dry_run:
@@ -229,6 +233,8 @@ class CorvinaManager:
                 elif diff.op == DiffEnum.NEW_LEAF:  # Probably nothing to do...
                     pass
                 elif diff.op == DiffEnum.DELETED_LEAF:  # Probably nothing to do...
+                    pass
+                elif diff.op == DiffEnum.LEAF_CHANGED:  # Probably nothing to do...
                     pass
                 else:
                     assert False, f'Not yet supported op! {diff.op}'

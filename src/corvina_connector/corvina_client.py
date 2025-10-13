@@ -145,6 +145,17 @@ class CorvinaClient:
         # models = await api.get_models(organization=self._org, page_size=1000)
         # return {m.id: m for m in models.data}
 
+    async def get_datamodel_from_name(self, name: str) -> list[DataModelRoot]:
+        # https://app.corvina.cloud/svc/mappings/api/v1/models?name=PanaTest-Minikube&version=1.1.0&organization=factoryal
+        logger.info(f'Querying Model {name}')
+
+        async with self._session() as s:
+            response = await self._get_json(s, 'api/v1/models', organization=self._org, pageSize=10000, name=name)
+            logger.debug(f'Got {orjson.dumps(response)}')
+
+        return [DataModelRoot.from_dict(i) for i in response['data']]
+
+
     async def create_data_model(self, data_model: DataModelRoot) -> DataModelRoot:
         async with self._session() as s:
             # Sample Payload

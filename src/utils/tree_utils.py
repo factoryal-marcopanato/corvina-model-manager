@@ -49,7 +49,7 @@ def _compute_data_model_difference_map_aux(
     # Leaf base case
     if isinstance(new_node, DataModelLeaf):  # and isinstance(current_node, TreeLeaf): # (redundant since they have the same type)
         if current_node != new_node:
-            map_dict[path_append(path, current_node_name)] = NodeDiff(DiffEnum.LEAF_CHANGED, new_node, path_append(path, current_node_name))
+            map_dict[path] = NodeDiff(DiffEnum.LEAF_CHANGED, new_node, path)
             return False
         return True
 

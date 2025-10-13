@@ -11,7 +11,7 @@ class DiffEnum(enum.Enum):
     NODE_CHANGED = 'node_changed'
     NEW_LEAF = 'new_leaf'
     DELETED_LEAF = 'deleted_leaf'
-    LEAF_CHANGED = 'leaf'
+    LEAF_CHANGED = 'leaf_changed'
 
 
 @dataclasses.dataclass
