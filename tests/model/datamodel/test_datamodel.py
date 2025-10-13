@@ -16,3 +16,9 @@ class DataModelRootTestCase(unittest.TestCase):
             dm = DataModelRoot.from_dict(d)
 
         self.assertTrue(True)
+
+    def test_deserialization_2(self):
+        corvina_str = '{"value":{"name":"PanaTest-Minikube.S2.A1.PLine2.WCell4.DriverMachine","version":"1.2.0","json":{"type":"object","instanceOf":"PanaTest-Minikube.S2.A1.PLine2.WCell4.DriverMachine:1.2.0","properties":{"IntegratedSin":{"version":"1.0.0","type":"double"},"IntegerValue":{"version":"1.1.0","type":"integer","deprecated":true}},"UUID":"eacln394v074fkeo"},"realmId":"factoryal","nameRaw":"PanaTest-Minikube.S2.A1.PLine2.WCell4.DriverMachine","parentId":null,"deleted":false,"orgResourceId":"factoryal","creationDate":1760346364001,"updatedAt":1760347421282,"id":"NQiFNIwXIG","metadata":[{"path":"PanaTest-Minikube.S2.A1.PLine2.WCell4.DriverMachine:1","type":"object","instanceOf":"PanaTest-Minikube.S2.A1.PLine2.WCell4.DriverMachine:1.2.0"}]}}'
+        dm = DataModelRoot.from_dict(json.loads(corvina_str)['value'])
+
+        self.assertTrue(True)

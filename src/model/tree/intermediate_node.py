@@ -11,6 +11,7 @@ class IntermediateNode(TreeNode):
     type: str  # object (always?)
     instanceOf: str
     properties: dict[str, TreeNode]
+    deprecated: bool = None
 
     def __eq__(self, other):
         return (

@@ -6,6 +6,7 @@ from model.tree.tree_node import TreeNode
 
 @dataclasses.dataclass(kw_only=True)
 class TreeLeaf(TreeNode, abc.ABC):
+    deprecated: bool = None
 
     def get_tree_node_children(self) -> dict[str, 'TreeNode']:
         return {}
@@ -20,4 +21,4 @@ class TreeLeaf(TreeNode, abc.ABC):
             return MappingLeaf(**dikt)
         else:  # DataModelLeaf
             from model.datamodel.datamodel_leaf import DataModelLeaf
-            return DataModelLeaf(**dikt)
+            return DataModelLeaf.from_dict(dikt)

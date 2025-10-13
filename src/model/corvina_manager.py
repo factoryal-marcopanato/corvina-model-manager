@@ -15,7 +15,7 @@ from model.semver_version import SemverVersion
 from model.tree.intermediate_node import IntermediateNode
 from model.tree.tree_node import TreeNode
 from utils.corvina_version_utils import version_re
-from utils.tree_utils import compute_data_model_difference_map, go_to_path
+from utils.tree_utils import compute_data_model_difference_map, go_to_path, maybe_set_deprecated_leaves
 from utils.tree_visit_utils import dfs, path_append
 
 logger = logging.getLogger('app.model_manager')
@@ -191,7 +191,7 @@ class CorvinaManager:
                     # TODO should check all child elements... HELP!!!
                 elif diff.op == DiffEnum.NODE_CHANGED:
                     assert isinstance(diff.node, IntermediateNode)
-                    logger.debug(f'Extracting model id from {diff.node.get_tree_node_name()}')
+                    logger.debug(f'Extracting model id for {diff.node.get_tree_node_name()}')
                     old_models = await self._get_datamodels_from_names([diff.node.get_tree_node_name()])
                     assert len(old_models) > 0 and old_models[0].id is not None, f'Cannot find id for {diff.node.get_tree_node_name()}! Found {old_models}'
 
@@ -200,7 +200,7 @@ class CorvinaManager:
                         sublevel_diffs = differences_by_level[depth + 1]
                         cur_node_children = diff.node.get_tree_node_children()
                         for sublevel_diff in sublevel_diffs:
-                            if sublevel_diff.new_version is not None:
+                            if sublevel_diff.new_version is not None and sublevel_diff.path.startswith(diff.path):
                                 # Set new version!
                                 child_name = sublevel_diff.path.split(configuration.tree_path_separator_char)[-1]
                                 if child_name not in cur_node_children:
@@ -209,15 +209,23 @@ class CorvinaManager:
                                 assert isinstance(child_node, IntermediateNode)
                                 child_node.instanceOf = child_node.get_tree_node_name() + ':' + sublevel_diff.new_version
 
+                    equal_node = go_to_path(corvina_current_model, diff.path.split(configuration.tree_path_separator_char))
+                    assert isinstance(equal_node, IntermediateNode)
+                    if diff.node.get_node_version() == '1.0.0':
+                        diff.node.instanceOf = equal_node.instanceOf
+
+                    maybe_set_deprecated_leaves(diff.node, diff.path, equal_node)
+
                     logger.info(f'Upgrading model (id={old_models[0].id}) {diff.node.get_tree_node_name()} {diff.node.get_node_version()}')
                     if not self._dry_run:
                         upgraded_model = await self._connector.update_data_model_by_id(
                             old_models[0].id, DataModelRoot.from_intermediate_node(diff.node)
                         )
-                        logger.info(f'New version of {diff.node.get_tree_node_name()} is {upgraded_model.version}!')
                         diff.new_version = upgraded_model.version
                     else:
                         diff.new_version = '9.9.9'
+                        logger.debug(f'Putting {orjson.dumps(DataModelRoot.from_intermediate_node(diff.node))}')
+                    logger.info(f'New version of {diff.node.get_tree_node_name()} is {diff.new_version}!')
                 elif diff.op == DiffEnum.NEW_LEAF:  # Probably nothing to do...
                     pass
                 elif diff.op == DiffEnum.DELETED_LEAF:  # Probably nothing to do...
@@ -228,6 +236,8 @@ class CorvinaManager:
         if 1 in differences_by_level:
             updated_root_node = differences_by_level[1][0]
             assert isinstance(updated_root_node.node, IntermediateNode)
+            updated_root_node.node.instanceOf = updated_root_node.node.get_tree_node_name() + ':' + updated_root_node.new_version
+
             updated_model = DataModelRoot.from_intermediate_node(updated_root_node.node)
             updated_model.data.label = new_model.data.label
             updated_model.data.unit = new_model.data.unit
@@ -241,15 +251,17 @@ class CorvinaManager:
     @staticmethod
     def _mapping_update_fun(mapping_to_edit: MappingRoot, node: TreeNode, path: str) -> bool:
         if isinstance(node, IntermediateNode):
-            mapping_node = go_to_path(mapping_to_edit, path.split(configuration.tree_path_separator_char))
+            mapping_node = go_to_path(mapping_to_edit, node.get_tree_node_name().split(configuration.tree_path_separator_char)[1:])
             assert isinstance(mapping_node, IntermediateNode), f'Boh {orjson.dumps(mapping_node)} in path {path}'
             if node.get_node_version() != mapping_node.get_node_version():
-                logger.debug(f'Upgrading {path} from {node.get_node_version()} to {mapping_node.get_node_version()}')
+                logger.debug(f'Upgrading {path} from {mapping_node.get_node_version()} to {node.get_node_version()}')
                 mapping_node.instanceOf = node.get_tree_node_name() + ':' + node.get_node_version()
         return True
 
     async def _perform_mapping_upgrade(self, upgraded_model: DataModelRoot, mapping: MappingRoot):
         logger.info('Setting new model versions in mapping')
-        dfs(mapping, functools.partial(self._mapping_update_fun, mapping))
+        dfs(upgraded_model.data, functools.partial(self._mapping_update_fun, mapping.data))
 
-        logger.debug(f'Got {orjson.dumps(mapping)}')
+        logger.debug(f'Setting new mapping {orjson.dumps(mapping)}')
+        if not self._dry_run:
+            await self._connector.create_preset(upgraded_model, mapping)
