@@ -44,8 +44,8 @@ def create_arguments_parser() -> argparse.Namespace:
 async def async_main():
     l0.info(f"Corvina Model Manager {utils.version_utils.get_version_and_date()}")
 
-    configuration.validate_configuration()
     args = create_arguments_parser()
+    configuration.validate_configuration()
 
     connector = CorvinaClient(
         org=configuration.corvina_org,

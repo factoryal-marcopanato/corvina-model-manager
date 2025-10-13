@@ -17,4 +17,4 @@ if [ ! -z "${FACTORYAL_UPDATE_CA_CERTIFICATES_ON_BOOT}" ]; then
 fi
 
 echo
-exec "$@"
+python src/corvina_model_manager.py "$@"
