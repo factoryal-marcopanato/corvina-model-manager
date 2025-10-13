@@ -1,4 +1,4 @@
-import copy
+
 import functools
 import logging
 import collections.abc
@@ -31,7 +31,7 @@ class CorvinaManager:
         if dry_run:
             logger.warning('Dry Run Mode ON! Nothing on Corvina will be set')
 
-    async def add_deploy_from_files(self, data_model: DataModelRoot, mapping: MappingRoot):
+    async def add_deploy_from_files(self, data_model: DataModelRoot, mapping: MappingRoot, device_id: str | None = None):
         logger.info('Creating Deploy from provided files')
 
         self._all_models_by_id = await self._connector.get_datamodels_by_id()
@@ -45,10 +45,15 @@ class CorvinaManager:
             logger.info(f'Model found in Corvina (id={matching_models[0].id})! Performing automatic migration')
             # new_data_model = await self._connector.update_data_model(matching_models[0], data_model)
             new_data_model = await self._perform_model_upgrade(matching_models[0], data_model)
-            await self._perform_mapping_upgrade(new_data_model, mapping)  # TODO save the new mapping?
+            new_mapping = await self._perform_mapping_upgrade(new_data_model, mapping)
         else:
             logger.info('Model and mapping not found in Corvina!')
-            await self._create_new_model_and_mapping(data_model, mapping)
+            new_mapping = await self._create_new_model_and_mapping(data_model, mapping)
+
+        if device_id is None:
+            return
+
+        await self._connector.set_device_mapping(device_id, new_mapping)
 
     async def remove_deploy_from_files(self, data_model: DataModelRoot, mapping: MappingRoot):
         # TODO this is not safe to remove model with a version > 1.0.0 (which is not detected)
@@ -105,14 +110,16 @@ class CorvinaManager:
                 except:
                     logger.exception(f'Cannot delete model {model.name}:{model.version}')
 
-    async def _create_new_model_and_mapping(self, model: DataModelRoot, mapping: MappingRoot):
+    async def _create_new_model_and_mapping(self, model: DataModelRoot, mapping: MappingRoot) -> MappingRoot:
         logger.info(f'Creating model {model.name} {model.version}')
         if not self._dry_run:
             await self._connector.create_data_model(model)
 
         logger.info(f'Creating mapping {mapping.name} for model {mapping.data.instanceOf}')
         if not self._dry_run:
-            await self._connector.create_preset(model, mapping)
+            return await self._connector.create_preset(model, mapping)
+
+        return mapping
 
     async def _get_datamodels_from_names(self, names: collections.abc.Iterable[str]) -> list[DataModelRoot]:
         if self._all_models_by_id is None:
@@ -141,17 +148,6 @@ class CorvinaManager:
         elif isinstance(node, DataModelLeaf):
             target_dict[path_append(path, node.get_tree_node_name())] = SemverVersion.from_string(node.version)
         return True
-
-    # @staticmethod
-    # def _a(map_dict: dict[str, NodeDiff], node: TreeNode, path: str) -> bool:
-    #     if isinstance(node, DataModelRoot):
-    #         target_dict[path_append(path, node.get_tree_node_name())] = SemverVersion.from_string(node.version)
-    #     elif isinstance(node, IntermediateNode):
-    #         target_dict[path_append(path, node.get_tree_node_name())] = SemverVersion.from_instance_of_string(
-    #             node.instanceOf)
-    #     elif isinstance(node, DataModelLeaf):
-    #         target_dict[path_append(path, node.get_tree_node_name())] = SemverVersion.from_string(node.version)
-    #     return True
 
     async def _perform_model_upgrade(self, corvina_current_model: DataModelRoot, new_model: DataModelRoot) -> DataModelRoot:
         if self._all_models_by_id is None:
@@ -278,10 +274,12 @@ class CorvinaManager:
                 mapping_node.instanceOf = node.get_tree_node_name() + ':' + node.get_node_version()
         return True
 
-    async def _perform_mapping_upgrade(self, upgraded_model: DataModelRoot, mapping: MappingRoot):
+    async def _perform_mapping_upgrade(self, upgraded_model: DataModelRoot, mapping: MappingRoot) -> MappingRoot:
         logger.info('Setting new model versions in mapping')
         dfs(upgraded_model.data, functools.partial(self._mapping_update_fun, mapping.data))
 
         logger.debug(f'Setting new mapping {orjson.dumps(mapping)}')
         if not self._dry_run:
-            await self._connector.create_preset(upgraded_model, mapping)
+            return await self._connector.create_preset(upgraded_model, mapping)
+
+        return mapping

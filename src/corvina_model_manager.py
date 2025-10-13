@@ -26,6 +26,7 @@ def create_arguments_parser() -> argparse.Namespace:
     )
     parser.add_argument('-d', '--datamodel', required=False, type=str, help='Path of the datamodel.json file to handle (required when syncing)')
     parser.add_argument('-m', '--mapping', required=False, type=str, help='Path of the mapping.json file to handle (required when syncing)')
+    parser.add_argument('--device-id', required=False, type=str, help='If set, the device will be configured using the provided mapping (only with sync operation)')
     parser.add_argument('--deploy-name', type=str, required=False)
     parser.add_argument('--dry-run', action='store_true', default=False, required=False)
 
@@ -43,8 +44,8 @@ def create_arguments_parser() -> argparse.Namespace:
 async def async_main():
     l0.info(f"Corvina Model Manager {utils.version_utils.get_version_and_date()}")
 
-    configuration.validate_configuration()
     args = create_arguments_parser()
+    configuration.validate_configuration()
 
     connector = CorvinaClient(
         org=configuration.corvina_org,
@@ -59,6 +60,7 @@ async def async_main():
     datamodel: DataModelRoot | None = None
     mapping: MappingRoot | None = None
     deploy_name: str | None = None
+    device_id: str | None = args.device_id
 
     if args.datamodel is not None:
         l0.info(f'Loading datamodel from {args.datamodel}')
@@ -79,7 +81,7 @@ async def async_main():
 
     if args.op == 'sync':
         l0.info('Syncing')
-        await manager.add_deploy_from_files(datamodel, mapping)
+        await manager.add_deploy_from_files(datamodel, mapping, device_id)
     elif args.op == 'remove':
         if deploy_name is not None:
             l0.info(f'Removing deploy {deploy_name}')

@@ -1,4 +1,3 @@
-import collections.abc
 
 import orjson
 import aiohttp
@@ -128,6 +127,14 @@ class CorvinaClient:
         fix_items = [CorvinaDevice.from_dict(i) for i in response['data']]
         return {i.id: i for i in fix_items}
 
+    async def set_device_mapping(self, device_id: str, mapping: MappingRoot):
+        assert mapping.id is not None, 'Mapping id must be already set!'
+        logger.info(f'Setting mapping {mapping.name}')
+
+        async with self._session() as s:
+            response = await self._put_json(s, f'api/v1/devices/{device_id}', orjson.dumps({'presetId': mapping.id}))
+            logger.debug(f'Got {orjson.dumps(response)}')
+
     # ------------------------------------------------------------------------------------------------------------------
     # Models Part
     # ------------------------------------------------------------------------------------------------------------------
@@ -253,7 +260,7 @@ class CorvinaClient:
         # mappings = await api.search_mapping(organization=self._org, page_size=1000)
         # return {m.id: m for m in mappings.data}
 
-    async def create_preset(self, data_model: DataModelRoot, mapping: MappingRoot):
+    async def create_preset(self, data_model: DataModelRoot, mapping: MappingRoot) -> MappingRoot:
         async with self._session() as s:
             # Sample Payload
             # {"name":"ProvaMapping","data":{"type":"object","instanceOf":"prova:1.0.0","properties":{"a":{"version":"1.0.0","type":"integer","mode":"R","historyPolicy":{"enabled":true},"sendPolicy":{"triggers":[{"changeMask":"value","minIntervalMs":1000,"skipFirstNChanges":0,"type":"onchange"}]},"datalink":{"source":"Ent.S.A.Prova"}}},"label":"","unit":"","description":"","UUID":"z5kn06t96oqqm3fl","tags":[]}}
@@ -262,6 +269,7 @@ class CorvinaClient:
             )
             new_mapping = MappingRoot.from_dict(data)
             logger.debug(f'Got {orjson.dumps(new_mapping)}')
+            return new_mapping
 
             # TODO should check for equality, or better, set ids etc...
 
