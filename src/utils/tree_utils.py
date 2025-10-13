@@ -49,7 +49,7 @@ def _compute_data_model_difference_map_aux(
     # Leaf base case
     if isinstance(new_node, DataModelLeaf):  # and isinstance(current_node, TreeLeaf): # (redundant since they have the same type)
         if current_node != new_node:
-            map_dict[path] = NodeDiff(DiffEnum.LEAF_CHANGED, new_node, path)
+            map_dict[path] = NodeDiff(DiffEnum.LEAF_CHANGED, new_node, path, new_node.version)
             return False
         return True
 
@@ -91,35 +91,35 @@ def _compute_data_model_difference_map_aux(
     return res
 
 
-def maybe_set_deprecated_leaves(node: IntermediateNode, path: str, original_model_node: IntermediateNode):
-    cur_child_names = set(node.get_tree_node_children().keys())
-    original_node_child_names = set(original_model_node.get_tree_node_children().keys())
-
-    common_child_names = original_node_child_names.intersection(cur_child_names)
-    new_child_names = cur_child_names.difference(common_child_names)
-    removed_child_names = original_node_child_names.difference(common_child_names)
-
-    for common_child_name in common_child_names:
-        # Common children are not deprecated anymore
-        node_child = node.get_tree_node_children()[common_child_name]
-        original_node_child = original_model_node.get_tree_node_children()[common_child_name]
-
-        # Recursive case
-        if isinstance(node_child, IntermediateNode):
-            assert isinstance(original_node_child, IntermediateNode)
-            node_child.deprecated = False  # TODO works?
-            maybe_set_deprecated_leaves(node_child, path_append(path, common_child_name), original_node_child)
-            continue
-
-        # Base Case
-        assert isinstance(node_child, DataModelLeaf) and isinstance(original_node_child, DataModelLeaf)
-        node_child.deprecated = False  # TODO works?
-
-    # Removed children must be set with deprecated flag set
-    for removed_child_name in removed_child_names:
-        node.properties[removed_child_name] = copy.deepcopy(original_model_node.get_tree_node_children()[removed_child_name])
-        # noinspection PyUnresolvedReferences
-        node.properties[removed_child_name].deprecated = True  # TODO find a correct type...
+# def maybe_set_deprecated_leaves(node: IntermediateNode, path: str, original_model_node: IntermediateNode):
+#     cur_child_names = set(node.get_tree_node_children().keys())
+#     original_node_child_names = set(original_model_node.get_tree_node_children().keys())
+#
+#     common_child_names = original_node_child_names.intersection(cur_child_names)
+#     new_child_names = cur_child_names.difference(common_child_names)
+#     removed_child_names = original_node_child_names.difference(common_child_names)
+#
+#     for common_child_name in common_child_names:
+#         # Common children are not deprecated anymore
+#         node_child = node.get_tree_node_children()[common_child_name]
+#         original_node_child = original_model_node.get_tree_node_children()[common_child_name]
+#
+#         # Recursive case
+#         if isinstance(node_child, IntermediateNode):
+#             assert isinstance(original_node_child, IntermediateNode)
+#             node_child.deprecated = False  # TODOo works?
+#             maybe_set_deprecated_leaves(node_child, path_append(path, common_child_name), original_node_child)
+#             continue
+#
+#         # Base Case
+#         assert isinstance(node_child, DataModelLeaf) and isinstance(original_node_child, DataModelLeaf)
+#         node_child.deprecated = False  # TODOo works?
+#
+#     # Removed children must be set with deprecated flag set
+#     for removed_child_name in removed_child_names:
+#         node.properties[removed_child_name] = copy.deepcopy(original_model_node.get_tree_node_children()[removed_child_name])
+#         # noinspection PyUnresolvedReferences
+#         node.properties[removed_child_name].deprecated = True  # TODOo find a correct type...
 
 
 A = """

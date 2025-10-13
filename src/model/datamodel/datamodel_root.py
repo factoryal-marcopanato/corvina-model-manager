@@ -51,12 +51,12 @@ class DataModelRoot(RootNode):
             data['data']['instanceOf'] = data['data']['instanceOf'] + ':1.0.0'
         return data
 
-    async def maybe_fetch_id(self, connector: 'CorvinaClient'):
+    async def maybe_fetch_id(self, connector: 'CorvinaClient', cache: dict[str, 'DataModelRoot'] | None = None):
         if self.id is not None:
             return
 
         # TODO implement the get by name (exists!!)
-        models: dict[str, DataModelRoot] = await connector.get_datamodels_by_id()
+        models: dict[str, DataModelRoot] = cache or (await connector.get_datamodels_by_id())
         for model_id, dm in models.items():
             if dm.name == self.clear_name and dm.version == self.version:
                 self.id = model_id

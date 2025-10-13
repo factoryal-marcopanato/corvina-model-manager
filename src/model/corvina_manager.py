@@ -15,7 +15,7 @@ from model.semver_version import SemverVersion
 from model.tree.intermediate_node import IntermediateNode
 from model.tree.tree_node import TreeNode
 from utils.corvina_version_utils import version_re
-from utils.tree_utils import compute_data_model_difference_map, go_to_path, maybe_set_deprecated_leaves
+from utils.tree_utils import compute_data_model_difference_map, go_to_path
 from utils.tree_visit_utils import dfs, path_append
 
 logger = logging.getLogger('app.model_manager')
@@ -72,7 +72,7 @@ class CorvinaManager:
             logger.info(f'Deleting model {model.name}:{model.version}')
             if not self._dry_run:
                 try:
-                    await self._connector.delete_data_model(model)
+                    await self._connector.delete_data_model(model, self._all_models_by_id)
                 except:
                     logger.exception(f'Cannot delete model {model.name}:{model.version}')
 
@@ -101,7 +101,7 @@ class CorvinaManager:
             logger.info(f'Deleting model {model.name}:{model.version}')
             if not self._dry_run:
                 try:
-                    await self._connector.delete_data_model(model)
+                    await self._connector.delete_data_model(model, self._all_models_by_id)
                 except:
                     logger.exception(f'Cannot delete model {model.name}:{model.version}')
 
@@ -186,7 +186,10 @@ class CorvinaManager:
                     assert isinstance(diff.node, IntermediateNode)
                     logger.info(f'Deleting model {diff.node.get_tree_node_name()} {diff.node.get_node_version()}')
                     if not self._dry_run:
-                        await self._connector.delete_data_model(DataModelRoot.from_intermediate_node(diff.node))
+                        try:
+                            await self._connector.delete_data_model(DataModelRoot.from_intermediate_node(diff.node), self._all_models_by_id)
+                        except:
+                            logger.exception(f'Exception while deleting data model {diff.node.instanceOf}')
                     # TODO store the created model version in current datamodel...
                     # TODO should check all child elements... HELP!!!
                 elif diff.op == DiffEnum.NODE_CHANGED:

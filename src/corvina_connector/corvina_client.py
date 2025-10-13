@@ -167,8 +167,8 @@ class CorvinaClient:
 
             # TODO should check for equality, or better, set ids etc...
 
-    async def update_data_model(self, old_data_model: DataModelRoot, new_data_model: DataModelRoot) -> DataModelRoot:
-        await old_data_model.maybe_fetch_id(self)
+    async def update_data_model(self, old_data_model: DataModelRoot, new_data_model: DataModelRoot, models_cache: dict[str, 'DataModelRoot'] | None = None) -> DataModelRoot:
+        await old_data_model.maybe_fetch_id(self, models_cache)
 
         async with self._session() as s:
             data = await self._put_json(
@@ -189,8 +189,12 @@ class CorvinaClient:
             new_data_model_root = DataModelRoot.from_dict(data['value'])
             return new_data_model_root
 
-    async def delete_data_model(self, data_model: DataModelRoot):
-        await data_model.maybe_fetch_id(self)
+    async def delete_data_model(self, data_model: DataModelRoot, models_cache: dict[str, 'DataModelRoot'] | None = None):
+        try:
+            await data_model.maybe_fetch_id(self, models_cache)
+        except AssertionError:
+            logger.warning(f'Cannot fetch id for model {data_model.name} {data_model.version}; maybe it has already been removed?')
+            return
 
         async with self._session() as s:
             data = await self._delete_json(s, 'api/v1/models/' + data_model.id, organization=self._org)
