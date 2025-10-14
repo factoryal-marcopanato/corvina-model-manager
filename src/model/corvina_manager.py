@@ -196,32 +196,42 @@ class CorvinaManager:
 
                     # Fix the node to apply!
                     if depth < len(diff_depths):
-                        sublevel_diffs = differences_by_level[depth + 1]
+                        # sublevel_diffs = differences_by_level[depth + 1]
                         cur_node_children = diff.node.get_tree_node_children()
-                        for sublevel_diff in [sd for sd in sublevel_diffs if
-                                              sd.path.startswith(diff.path)]:  # Set new version!
-                            child_name = sublevel_diff.path.split(configuration.tree_path_separator_char)[-1]
-                            if child_name not in cur_node_children:
-                                continue
+                        for child_name, child in cur_node_children.items():
+                            if isinstance(child, IntermediateNode):
+                                # try to fetch from Corvina
+                                try:
+                                    updated_model = (await self._connector.get_datamodel_from_name(child.get_tree_node_name()))[0]
+                                    cur_node_children[child_name] = updated_model.data
+                                except:
+                                    pass
 
-                            if sublevel_diff.op == DiffEnum.NODE_CHANGED:
-                                if sublevel_diff.new_version is not None:
-                                    # Not-tanto-smart approach: query Corvina for the new model...
-                                    cur_node_children[child_name] = (await self._connector.get_datamodel_from_name(
-                                        cur_node_children[child_name].get_tree_node_name()))[0].data
-
-                                    # child_node = cur_node_children[child_name]
-                                    # assert isinstance(child_node, IntermediateNode)
-                                    # child_node.instanceOf = child_node.get_tree_node_name() + ':' + sublevel_diff.new_version
-
-                            elif sublevel_diff.op == DiffEnum.DELETED_NODE:
-                                cur_node_children[child_name] = (await self._connector.get_datamodel_from_name(
-                                    cur_node_children[child_name].get_tree_node_name()))[0].data
-                                # noinspection PyUnresolvedReferences
-                                cur_node_children[child_name].deprecated = True  # TODO find the correct type...
-
-                            else:
-                                logger.debug(f'Doing nothing for subdiff {sublevel_diff} on {diff}...')
+                        # for sublevel_diff in [sd for sd in sublevel_diffs if
+                        #                       sd.path.startswith(diff.path)]:  # Set new version!
+                        #     child_name = sublevel_diff.path.split(configuration.tree_path_separator_char)[-1]
+                        #     if child_name not in cur_node_children:
+                        #         logger.debug(f'Skipping child {child_name} for current node with path {diff.path}')
+                        #         continue
+                        #
+                        #     if sublevel_diff.op == DiffEnum.NODE_CHANGED:
+                        #         if sublevel_diff.new_version is not None:
+                        #             # Not-tanto-smart approach: query Corvina for the new model...
+                        #             cur_node_children[child_name] = (await self._connector.get_datamodel_from_name(
+                        #                 cur_node_children[child_name].get_tree_node_name()))[0].data
+                        #
+                        #             # child_node = cur_node_children[child_name]
+                        #             # assert isinstance(child_node, IntermediateNode)
+                        #             # child_node.instanceOf = child_node.get_tree_node_name() + ':' + sublevel_diff.new_version
+                        #
+                        #     elif sublevel_diff.op == DiffEnum.DELETED_NODE:
+                        #         cur_node_children[child_name] = (await self._connector.get_datamodel_from_name(
+                        #             cur_node_children[child_name].get_tree_node_name()))[0].data
+                        #         # noinspection PyUnresolvedReferences
+                        #         cur_node_children[child_name].deprecated = True  # TODO find the correct type...
+                        #
+                        #     else:
+                        #         logger.debug(f'Doing nothing for subdiff {sublevel_diff} on {diff}...')
 
                     equal_node = go_to_path(corvina_current_model, diff.path.split(configuration.tree_path_separator_char))
                     assert isinstance(equal_node, IntermediateNode)
@@ -267,7 +277,12 @@ class CorvinaManager:
     @staticmethod
     def _mapping_update_fun(mapping_to_edit: MappingRoot, node: TreeNode, path: str) -> bool:
         if isinstance(node, IntermediateNode):
-            mapping_node = go_to_path(mapping_to_edit, node.get_tree_node_name().split(configuration.tree_path_separator_char)[1:])
+            try:
+                mapping_node = go_to_path(mapping_to_edit, node.get_tree_node_name().split(configuration.tree_path_separator_char)[1:])
+            except:
+                logger.warning(f'Node {node.get_tree_node_name().split(configuration.tree_path_separator_char)[1:]} not found in new mapping {node.get_tree_node_name()}')
+                return True
+
             assert isinstance(mapping_node, IntermediateNode), f'Boh {orjson.dumps(mapping_node)} in path {path}'
             if node.get_node_version() != mapping_node.get_node_version():
                 logger.debug(f'Upgrading {path} from {mapping_node.get_node_version()} to {node.get_node_version()}')

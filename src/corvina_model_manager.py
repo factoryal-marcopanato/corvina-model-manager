@@ -30,8 +30,6 @@ def create_arguments_parser() -> argparse.Namespace:
     parser.add_argument('--deploy-name', type=str, required=False)
     parser.add_argument('--dry-run', action='store_true', default=False, required=False)
 
-    # TODO manca il device id dove applicare...
-
     args = parser.parse_args()
 
     # Validate arguments
@@ -91,69 +89,6 @@ async def async_main():
             await manager.remove_deploy_from_files(datamodel, mapping)
     else:
         l0.info('Nothing to do')
-
-    # dm = DataModelRoot.from_dict(await read_json_async('sample_files/datamodel_1.json'))
-    # mapping = MappingRoot.from_dict(await read_json_async('sample_files/mapping_1.json'))
-
-    # await add_deploy_from_files(connector, dm, mapping)  # THIS WORKS!
-    # await remove_deploy_from_files(connector, dm, mapping)  # ALSO THIS WORKS!
-
-    # Allowed Operations
-    # 1. sync
-    # 2. delete (release name, only if non-used?)
-
-    # Test 1: model creation
-    # new_model_json = orjson.loads('{"name":"prova","data":{"type":"object","instanceOf":"prova","properties":{"a":'
-    #                               '{"type":"integer"}},"label":"","unit":"","description":"","tags":[]}}')
-    # new_model = DataModelRoot.from_dict(new_model_json)
-    # # await connector.create_data_model(new_model)
-
-    # Test 2: model deletion
-    # await connector.delete_data_model_by_id('gKhpG9ktLF')
-
-    # Test 3: remove models by name
-    # models = await connector.get_datamodels_by_id()
-    # for model in models.values():
-    #     if (
-    #         model.name.startswith('stupefied-galileo') or model.name.startswith('silly-greider') or
-    #         model.name.startswith('vigilant-banach') or model.name.startswith('stupefied-traffic')
-    #     ):
-    #         continue
-    #
-    #     l0.info(f'Deleting model {model.name}')
-    #     await connector.delete_data_model(model)
-
-    # Test 4 Mapping/Preset creation (depends on test 1)
-    # new_mapping_json = orjson.loads('{"name":"ProvaMapping","data":{'
-    #                                 '"type":"object","instanceOf":"prova:1.0.0","properties":{'
-    #                                     '"a":{'
-    #                                         '"version":"1.0.0","type":"integer","mode":"R","historyPolicy":{"enabled":true},'
-    #                                         '"sendPolicy":{"triggers":[{"changeMask":"value","minIntervalMs":1000,"skipFirstNChanges":0,"type":"onchange"}]}'
-    #                                 ',"datalink":{"source":"Ent.S.A.Prova"}}},"label":"","unit":"","description":"","tags":[]}}')
-    # new_mapping = MappingRoot.from_dict(new_mapping_json)
-    # # await connector.create_preset(new_model, new_mapping)
-
-    # Test 5 Mapping/Preset remove (depends on test 1 + 4)
-    # await connector.delete_preset(new_mapping)
-
-    # print(await connector.get_presets_by_id())
-
-    # Every Factory-Modeler deploy has a name-prefix
-    # What to do
-    # 1. Get a model and a mapping from local files
-    # 2. discover if model and mapping are already available in Corvina
-    #    3a. new models! simply POST the new files...
-    #    3b. compute differences and
-
-    # datamodels = await connector.get_datamodels_by_id()  # TODO store also the corvina id since it is very very important!!!
-    # mappings = await connector.get_mappings_by_id()
-    # devices = await connector.get_devices_by_id()
-
-
-
-    # print(orjson.dumps(datamodels))
-    # print(orjson.dumps(mappings))
-    # print(orjson.dumps(devices))
 
     l0.info("Bye")
 

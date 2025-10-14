@@ -1,4 +1,3 @@
-import copy
 
 from model.datamodel.datamodel_leaf import DataModelLeaf
 from model.node_diff import NodeDiff, DiffEnum

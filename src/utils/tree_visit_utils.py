@@ -20,7 +20,7 @@ def _dfs_aux(root: TreeNode, path: str, fun: recursive_fun) -> bool:
     if not fun(root, path):
         return False
 
-    return all(_dfs_aux(c, path_append(path, root.get_tree_node_name()), fun) for c in root.get_tree_node_children().values())
+    return all(_dfs_aux(c, path_append(path, root.get_tree_node_name().split(configuration.tree_path_separator_char)[-1]), fun) for c in root.get_tree_node_children().values())
 
 
 async def dfs_async(root: TreeNode, fun: recursive_fun_async):
